@@ -58,7 +58,7 @@ to normalized RNA-seq experiments.
 
 #### Get the help message
 
-Run 'Rscript CRUP.R' or 'Rscript CRUP.R -h' to see all possible functions of CRUP.
+Navigate to 'CRUP' directory and type 'Rscript CRUP.R' or 'Rscript CRUP.R -h' to see all possible functions of CRUP.
 
 Usage: CRUP.R [-[-norm|N]] [-[-prediction|P]] [-[-dynamics|D]] [-[-targets|T]] [-[-help|h]]\
     -N|--norm          computes normalized count values for .bam files\
