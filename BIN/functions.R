@@ -857,7 +857,7 @@ plot_heatmap <- function(mat, IDs, color_low, color_mid, color_high, x_axis_labe
 	cluster.unique <- unique(mat$GRID.X[-grep("r",mat$GRID.X)])
   }
 
-  my_colors <- data.frame( col=sample(rainbow(length(cluster.unique), start=0.1, s=0.9),length(cluster.unique)),
+  my_colors <- data.frame( col=sample(rainbow(length(cluster.unique), s=0.5),length(cluster.unique)),
 			   cluster=cluster.unique,
 			   stringsAsFactors=F)
 
@@ -869,7 +869,6 @@ plot_heatmap <- function(mat, IDs, color_low, color_mid, color_high, x_axis_labe
 	label[median(as.numeric(mat$Y[which(mat$GRID.X[which(mat$GRID.Y == "cluster")]==this)]))] = this
   } 
 
-  # plot:
   plot <- ggplot( mat, aes(x = X,y = Y)) + 
                   geom_tile(aes(fill = FILL, height = 1), size = 0) + 
                   facet_grid( . ~ GRID.Y,
@@ -877,6 +876,9 @@ plot_heatmap <- function(mat, IDs, color_low, color_mid, color_high, x_axis_labe
                               space = "free"
                   ) +
                   theme( axis.ticks = element_blank(),
+			 axis.title = element_text(size = 15),
+			 strip.text = element_text(size = 15),
+			 legend.title=element_text(size=15),
                          panel.grid.major = element_blank(), 
                          panel.grid.minor = element_blank(),
                          panel.background = element_blank(), 
@@ -902,6 +904,7 @@ plot_heatmap <- function(mat, IDs, color_low, color_mid, color_high, x_axis_labe
 		  geom_text(aes(label=label),subset(mat,GRID.Y %in% c("cluster")))
 
     ggsave(filename = paste0(out.file,".pdf"), plot = plot, width = width, height = height, device = "pdf", units = 'in')
+    ggsave(filename = paste0(out.file,".png"), plot = plot, width = width, height = height, device = "png", units = 'in', dpi=300)
 }
 
 

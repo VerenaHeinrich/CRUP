@@ -8,7 +8,7 @@ whereas each step build upon one another.
 CRUP collapses different layers of epigenetic information into a single list of regulatory units
 consisting of dynamically changing enhancers and target genes.
 
-###### General workflow
+#### General workflow
 
 CRUP-normalize -> CRUP-EP -> CRUP-ED -> CRUP-ET
 
@@ -208,7 +208,7 @@ Run 'Rscript CRUP.R -D -p TEST/RESULTS/1_RF_PREDICTIONS/CONDITION_1/prediction.r
 
 Output:
 
-> 1. summarized condition-specific enhancer regions, visualized as a heatmap (colored bt lowest p-value in region):\
+> 1. summarized condition-specific enhancer regions, visualized as a heatmap (.pdf, and .png):\
 >'TEST/RESULTS/2_DIFFERENTIAL_ENHANCERS/dynamicEnh__w0_0.1__threshold_0.01.pdf'\
 >  - main clusters (1,2, ..) are additionally highlighted on the right border. These clusters describe dynamic enhancer regions that are active on just one condition.
 >  - Cluster 'U' describes enhancer regions that are active in all conditions.
