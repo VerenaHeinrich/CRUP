@@ -11,7 +11,6 @@ getScriptPath <- function(){
     if (length(script.dir) > 1) stop("can't determine script dir: more than one '--file' argument detected")
     return(paste0(normalizePath(script.dir),"/"))
 }
-
 path <- getScriptPath()
 
 ##################################################################
