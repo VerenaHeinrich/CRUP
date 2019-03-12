@@ -178,7 +178,7 @@ if (is.null(opt$expression)) {
 
   # get summarized and normalized counts
   cat(paste0(skip(), "get normalized gene expression counts"))
-  expr.gr <- get_bamOverlaps(	unlist(rna),
+  expr.gr <- get_bamOverlaps( unlist(rna),
                               IDs,
                               txdb,
                               singleEnd = (sequencing == "single"))
@@ -186,9 +186,10 @@ if (is.null(opt$expression)) {
   
   out.rds <- paste0(outdir, paste0("gene_expression.rds"))
   cat(paste0(skip(), "save normalized gene expression counts to:  ", out.rds))
-  saveRDS(expr.gr, gsub("/{1,}","/",out.rds))
+  saveRDS(expr.gr, out.rds)
   done()
   
+  # get IDs:
   IDs <- unlist(IDs)
   
   endPart()
@@ -205,14 +206,25 @@ if (is.null(opt$expression)) {
 
 startPart("Correlate condition specific enhancers and genes")
 
+# dynamic enhancer regions:
 regions.gr <- makeGRangesFromDataFrame(read.table(regions, header = TRUE), keep.extra.columns = T)
+cluster.U <- which(mcols(regions.gr)$cluster == 'U')
+if(length(cluster.U) > 0) {regions.gr <- regions.gr[-cluster.U]}
+
+# TAD/domain regions:
 TAD.df <- read.table(TAD, col.names = GR_header_short)
 TAD.df <- TAD.df[which((TAD.df$end-TAD.df$start) > 0),]
 TAD.gr <- makeGRangesFromDataFrame(TAD.df)
 seqlevels(TAD.gr) = paste0("chr", gsub("chr|Chr","",seqlevels(TAD.gr)))
 
 cat(paste0(skip(), "correlate enhancer probabilities and gene expression counts"))
-units <- get_units(regions.gr, expr.gr, TAD.gr, IDs, cores, threshold_c)
+units <- get_units(	regions.gr,
+			expr.gr,
+			TAD.gr,
+			IDs,
+			cores,
+			threshold_c
+			)
 done()
 
 out.txt <- paste0(outdir, paste0("RegulatoryUnits.txt"))
