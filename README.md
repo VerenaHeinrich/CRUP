@@ -196,7 +196,7 @@ dynamic enhancer cluster that do not belong to the main clusters (1,2, ..) or cl
 Run 'Rscript CRUP.R -T' to see all possible input parameters.
 
 
-#### A) Example run with RNA-seq experiments in bam file format:\
+A) Example run with RNA-seq experiments in bam file format:\
 
 Run 'Rscript CRUP.R -T -r TEST/RESULTS/2_DIFFERENTIAL_ENHANCERS/dynamicEnh__w0_0.1__threshold_0.01.txt -g mm10 -s paired -E TEST/DATA/RNAseq/Condition1.bam,TEST/DATA/RNAseq/Condition2.bam -o TEST/RESULTS/3_REGULATORY_REGIONS/'
 
@@ -220,7 +220,7 @@ Output:
 > 'RegulatoryUnits.interaction'
 
 
-#### B) Example run with already summarized RNA-seq experiments:
+B) Example run with already summarized RNA-seq experiments:
 
 Run 'Rscript CRUP.R -T -r TEST/RESULTS/2_DIFFERENTIAL_ENHANCERS/dynamicEnh__w0_0.1__threshold_0.01.txt -e TEST/RESULTS/3_REGULATORY_REGIONS/gene_expression.rds -o TEST/RESULTS/3_REGULATORY_REGIONS/'
 
