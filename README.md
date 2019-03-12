@@ -133,8 +133,6 @@ Usage: CRUP.R [-[-norm|N]] [-[-cores|x] <integer>] [-[-file|f] <character>] [-[-
 
 #### Example run:
 
-**Note: the presented example doesn't have any biological meaning.**
-
 This function (input) normalizes and summarizes read counts from ChIP-seq experiments in a (100 bp) binned genome.
 The ChIP-seq experiments are listed in the required info file 'condition1.info.txt'.
 
