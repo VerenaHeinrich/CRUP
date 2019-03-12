@@ -97,12 +97,14 @@ if (is.null(opt$threshold_c)) {
   cat(paste0(opt$threshold_c, " is not in range [0.5,1].\n"))
   q();
 }
-if (is.null(opt$cores))     opt$cores <- 1
-if (is.null(opt$TAD) &  opt$genome == "mm10") {
+if (is.null(opt$cores)) opt$cores <- 1
+if (is.null(opt$TAD) & opt$genome == "mm10") {
+  opt$TAD   <- normalizePath("DATA/mESC_mapq30_KR_all_TADs.bed")
+}
+if (is.null(opt$TAD))  {
   cat(paste0("You have to provide your own file with TAD domains (fitting to the genome choice).\n"))
   q();
 }
-if (is.null(opt$TAD))       opt$TAD   <- normalizePath("DATA/mESC_mapq30_KR_all_TADs.bed")
 
 ##################################################################
 # define input parameter
