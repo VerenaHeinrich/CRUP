@@ -34,7 +34,7 @@ This function (input) normalizes and summarizes read counts from ChIP-seq experi
 (100 bp) binned genome.
 
 
-#### CRUP - EP ([E]nhancer [P]rediction)
+#### CRUP - EP:  (E)nhancer (P)rediction
 
 The random forest-based enhancer classifier CRUP-EP (Enhancer Prediction) was developed so that 
 it can be applied across different cell types and species without the need of being re-trained.
@@ -42,7 +42,7 @@ To guarantee a good transferability, binned ChIP-seq counts are quantile normali
 sample that was used to train the classifier.
 
 
-#### CRUP - ED ([E]nhancer [D]ynamics)
+#### CRUP - ED: (E)nhancer (D)ynamics
 
 CRUP-ED (Enhancer Dynamics) is based on enhancer probabilities and identifies
 condition-specific ('dynamic') enhancer regions by applying a permutation test.
@@ -50,7 +50,7 @@ Using empricial p-values, pattern of pairwise significance are build to cluster
 adjacent regions.
 
 
-#### CRUP - ET ([E]nhancer ([T]argets)
+#### CRUP - ET: (E)nhancer (T)argets
 
 The method CRUP - ET (Enhancer Targets) was developed to correlate condition-specific enhancers
 to normalized RNA-seq experiments.
