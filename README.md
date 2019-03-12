@@ -72,7 +72,7 @@ Usage: CRUP.R [-[-norm|N]] [-[-prediction|P]] [-[-dynamics|D]] [-[-targets|T]] [
 All required R packages are installed at the first run.\
 Nothing needs to be installed manually.
 
-> Overview of all packages:\
+> Overview of all packages:
 > 
 > getopt\
 > bamsignals\
@@ -217,8 +217,6 @@ Output:
 > 'TEST/RESULTS/2_DIFFERENTIAL_ENHANCERS/dynamicEnh__w0_0.1__threshold_0.01.txt'\
 > - 'best.p.value'	-> lowest empirical pvalue in condition-specfic enhancer region\
 > - 'cluster'	-> cluster obtained from significance pattern\dynamic enhancer cluster that do not belong to the main clusters (1,2, ..) or cluster 'U' start with an 'r' ('remaining')\
-> - 'significance.pattern'  -> significance pattern\
->    - e.g. '01' means that condition 1 and condition 2 are significantly different and the enhancer probability  of condition 2 > condition 1\
 > - highest enhancer probability values for each region per sample
 > 3. all condition-specific enhancer regions in bed file format:\
 > 'TEST/RESULTS/2_DIFFERENTIAL_ENHANCERS/dynamicEnh__w0_0.1__threshold_0.01.bed'\
