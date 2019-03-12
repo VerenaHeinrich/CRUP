@@ -1,0 +1,5 @@
+feature	bam_file	bam_file_input
+H3K27ac	TEST/DATA/ChIPseq/Condition1.H3K27ac.bam	TEST/DATA/ChIPseq/Condition1.Input.bam
+H3K4me1	TEST/DATA/ChIPseq/Condition1.H3K4me1.bam	TEST/DATA/ChIPseq/Condition1.Input.bam
+H3K4me3	TEST/DATA/ChIPseq/Condition1.H3K4me3.bam	TEST/DATA/ChIPseq/Condition1.Input.bam
+
