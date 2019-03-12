@@ -167,11 +167,11 @@ Run 'Rscript CRUP.R -P -m TEST/RESULTS/0_NORMALIZED_DATA/condition1.data_matrix.
 
 Output:
 
-> 1. enhancer probabilities for each 100 bp bin in the genome (bigwig (.bw) and .rds fileformat):\
+> 1. enhancer probabilities for each 100 bp bin in the genome (bigwig (.bw) and .rds fileformat):
 > 'TEST/RESULTS/1_RF_PREDICTIONS/CONDITION_1/prediction.bw'\
-> 'TEST/RESULTS/1_RF_PREDICTIONS/CONDITION_1/prediction.rds'\
+> 'TEST/RESULTS/1_RF_PREDICTIONS/CONDITION_1/prediction.rds'
 > 2. enhancer peak calls (bedgraph format):\
-> 'TEST/RESULTS/1_RF_PREDICTIONS/CONDITION_1/singleEnh.bedGraph'\
+> 'TEST/RESULTS/1_RF_PREDICTIONS/CONDITION_1/singleEnh.bedGraph'
 > 3. cluster of peak (bedgraph format):\
 > 'TEST/RESULTS/1_RF_PREDICTIONS/CONDITION_1/clusterEnh.bed'
 
@@ -209,17 +209,18 @@ Run 'Rscript CRUP.R -D -p TEST/RESULTS/1_RF_PREDICTIONS/CONDITION_1/prediction.r
 Output:
 
 > 1. summarized condition-specific enhancer regions, visualized as a heatmap (.pdf, and .png):\
->'TEST/RESULTS/2_DIFFERENTIAL_ENHANCERS/dynamicEnh__w0_0.1__threshold_0.01.pdf'\
+>'TEST/RESULTS/2_DIFFERENTIAL_ENHANCERS/dynamicEnh__w0_0.1__threshold_0.01.pdf'
 >  - main clusters (1,2, ..) are additionally highlighted on the right border. These clusters describe dynamic enhancer regions that are active on just one condition.
 >  - Cluster 'U' describes enhancer regions that are active in all conditions.
 
 > 2. summarized condition-specific enhancer regions:\
-> 'TEST/RESULTS/2_DIFFERENTIAL_ENHANCERS/dynamicEnh__w0_0.1__threshold_0.01.txt'\
+> 'TEST/RESULTS/2_DIFFERENTIAL_ENHANCERS/dynamicEnh__w0_0.1__threshold_0.01.txt'
 > - 'best.p.value'	-> lowest empirical pvalue in condition-specfic enhancer region\
-> - 'cluster'	-> cluster obtained from significance pattern\dynamic enhancer cluster that do not belong to the main clusters (1,2, ..) or cluster 'U' start with an 'r' ('remaining')\
+> - 'cluster'	-> cluster obtained from significance pattern\
+dynamic enhancer cluster that do not belong to the main clusters (1,2, ..) or cluster 'U' start with an 'r' ('remaining')
 > - highest enhancer probability values for each region per sample
 > 3. all condition-specific enhancer regions in bed file format:\
-> 'TEST/RESULTS/2_DIFFERENTIAL_ENHANCERS/dynamicEnh__w0_0.1__threshold_0.01.bed'\
+> 'TEST/RESULTS/2_DIFFERENTIAL_ENHANCERS/dynamicEnh__w0_0.1__threshold_0.01.bed'
 > 4. the main clusters (1,2, ..) and cluster 'U' ('ubiquitous') are additionally exported as separated .bed files
 
 
@@ -249,19 +250,19 @@ Run 'Rscript CRUP.R -T -r TEST/RESULTS/2_DIFFERENTIAL_ENHANCERS/dynamicEnh__w0_0
 Output:
 
 > 1. normalized gene expression counts:\
-> 'gene_expression.rds'\
+> 'gene_expression.rds'
 > 2. dynamic regulatory units in txt format:\
-> 'RegulatoryUnits.txt'\
-> - 'seqnames'            -> chr of dynamic enhancer region\
-> - 'start'               -> start of dynamic enhancer region\
-> - 'end'                 -> end of dynamic enhancer region\
-> - 'width'               -> width of dynamic enhancer region\
-> - 'strand'              -> strand of dynamic enhancer region\
-> - 'cluster'             -> associated cluster of dynamic enhancer region\
-> - 'TAD_COORDINATES'     -> coordinates of topologically associated domain around dynamic enhancer region\
-> - 'CORRELATED_GENE'     -> ID of the gene that is correlated with dynamic enhancer region\
-> - 'CORRELATION'         -> correlation value\
-> - best probability values for each region per sample\
+> 'RegulatoryUnits.txt'
+> - 'seqnames'            -> chr of dynamic enhancer region
+> - 'start'               -> start of dynamic enhancer region
+> - 'end'                 -> end of dynamic enhancer region
+> - 'width'               -> width of dynamic enhancer region
+> - 'strand'              -> strand of dynamic enhancer region
+> - 'cluster'             -> associated cluster of dynamic enhancer region
+> - 'TAD_COORDINATES'     -> coordinates of topologically associated domain around dynamic enhancer region
+> - 'CORRELATED_GENE'     -> ID of the gene that is correlated with dynamic enhancer region
+> - 'CORRELATION'         -> correlation value
+> - best probability values for each region per sample
 > 3. dynamic regulatory units in (ucsc) interaction format:\
 > 'RegulatoryUnits.interaction'
 
