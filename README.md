@@ -60,12 +60,12 @@ to normalized RNA-seq experiments.
 
 Navigate to 'CRUP' directory and type 'Rscript CRUP.R' or 'Rscript CRUP.R -h' to see all possible functions of CRUP.
 
-Usage: CRUP.R [-[-norm|N]] [-[-prediction|P]] [-[-dynamics|D]] [-[-targets|T]] [-[-help|h]]\
-    -N|--norm          computes normalized count values for .bam files\
-    -P|--prediction    runs CRUP - EP: (E)nhancer (P)rediction from histone modification\
-    -D|--dynamics      runs CRUP - ED: assigns (E)nhancer to (D)ynamic conditions\
-    -T|--targets       runs CRUP - ET: correlates (E)nhancer to (T)arget genes\
-    -h|--help          this help message
+>Usage: CRUP.R [-[-norm|N]] [-[-prediction|P]] [-[-dynamics|D]] [-[-targets|T]] [-[-help|h]]\
+>    -N|--norm          computes normalized count values for .bam files\
+>    -P|--prediction    runs CRUP - EP: (E)nhancer (P)rediction from histone modification\
+>    -D|--dynamics      runs CRUP - ED: assigns (E)nhancer to (D)ynamic conditions\
+>    -T|--targets       runs CRUP - ET: correlates (E)nhancer to (T)arget genes\
+>    -h|--help          this help message
 
     
 #### R PACKAGES
@@ -106,9 +106,9 @@ The following histone modifications must be present:\
 
 The required column names are: 'feature', 'bam_file', 'bam_file_input'
 
-feature         -> lists histone modifications\
-bam_file        -> location of the alignments in bam format, e.g.: 'TEST/DATA/ChIPseq/condition1.H3K27ac.bam'\
-bam_file_input  -> location of the Input experiments that are associated with each bam_file entry. 
+feature         : lists histone modifications\
+bam_file        : location of the alignments in bam format, e.g.: 'TEST/DATA/ChIPseq/condition1.H3K27ac.bam'\
+bam_file_input  : location of the Input experiments that are associated with each bam_file entry. 
 
 Example info files:
 
@@ -162,14 +162,14 @@ Run 'Rscript CRUP.R -D' to see all possible input parameters.
 
 #### Example run:
 
-First: \
+Step 1: \
 predict enhancers in another condition (e.g. 'condition2').
 
 Run 'Rscript CRUP.R -N -f TEST/condition2.info.txt -g mm10 -s paired -o TEST/RESULTS/0_NORMALIZED_DATA/'
 
 Run 'Rscript CRUP.R -P -m TEST/RESULTS/0_NORMALIZED_DATA/condition2.data_matrix.rds -o TEST/RESULTS/1_RF_PREDICTIONS/CONDITION_2/'
 
-Then:\
+Step 2:\
 identify condition-specific enhancer regions.
 
 Run 'Rscript CRUP.R -D -p TEST/RESULTS/1_RF_PREDICTIONS/CONDITION_1/prediction.rds,TEST/RESULTS/1_RF_PREDICTIONS/CONDITION_2/prediction.rds -o TEST/RESULTS/2_DIFFERENTIAL_ENHANCERS/ -n cond1,cond2'
@@ -183,8 +183,8 @@ Output:
 
 > 2. summarized condition-specific enhancer regions:\
 > 'TEST/RESULTS/2_DIFFERENTIAL_ENHANCERS/dynamicEnh__w0_0.1__threshold_0.01.txt'
-> - 'best.p.value'	-> lowest empirical pvalue in condition-specfic enhancer region\
-> - 'cluster'	-> cluster obtained from significance pattern\
+> - 'best.p.value' : lowest empirical pvalue in condition-specfic enhancer region\
+> - 'cluster'	 : cluster obtained from significance pattern\
 dynamic enhancer cluster that do not belong to the main clusters (1,2, ..) or cluster 'U' start with an 'r' ('remaining')
 > - highest enhancer probability values for each region per sample
 > 3. all condition-specific enhancer regions in bed file format:\
@@ -207,15 +207,15 @@ Output:
 > 'gene_expression.rds'
 > 2. dynamic regulatory units in txt format:\
 > 'RegulatoryUnits.txt'
-> - 'seqnames'            -> chr of dynamic enhancer region
-> - 'start'               -> start of dynamic enhancer region
-> - 'end'                 -> end of dynamic enhancer region
-> - 'width'               -> width of dynamic enhancer region
-> - 'strand'              -> strand of dynamic enhancer region
-> - 'cluster'             -> associated cluster of dynamic enhancer region
-> - 'TAD_COORDINATES'     -> coordinates of topologically associated domain around dynamic enhancer region
-> - 'CORRELATED_GENE'     -> ID of the gene that is correlated with dynamic enhancer region
-> - 'CORRELATION'         -> correlation value
+> - 'seqnames'            : chr of dynamic enhancer region
+> - 'start'               : start of dynamic enhancer region
+> - 'end'                 : end of dynamic enhancer region
+> - 'width'               : width of dynamic enhancer region
+> - 'strand'              : strand of dynamic enhancer region
+> - 'cluster'             : associated cluster of dynamic enhancer region
+> - 'TAD_COORDINATES'     : coordinates of topologically associated domain around dynamic enhancer region
+> - 'CORRELATED_GENE'     : ID of the gene that is correlated with dynamic enhancer region
+> - 'CORRELATION'         : correlation value
 > - best probability values for each region per sample
 > 3. dynamic regulatory units in (ucsc) interaction format:\
 > 'RegulatoryUnits.interaction'
