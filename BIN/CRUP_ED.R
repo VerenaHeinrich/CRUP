@@ -231,7 +231,7 @@ mat <- data.frame(  X = unlist(lapply(LABEL_REP, function(x) rep(x, length(peaks
 )
 
 out <- paste0(outdir, paste0("dynamicEnh__w0_",w_0,"__threshold_", threshold))
-cat(paste0(skip(), "Output 4 - results are visualized as a heatmap (pdf):  ", out,".pdf"))
+cat(paste0(skip(), "Output 4 - results are visualized as a heatmap (pdf and png):  ", out,".pdf/png"))
 
 plot_heatmap( mat,
               IDs,
