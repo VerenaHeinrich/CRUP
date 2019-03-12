@@ -853,7 +853,7 @@ plot_heatmap <- function(mat, IDs, color_low, color_mid, color_high, x_axis_labe
   # define colors and labels for cluster:
   cluster <- grep("r",mat$GRID.X)
   cluster.unique <- unique(mat$GRID.X)
-  if(length(r.cluster != 0)){
+  if(length(cluster != 0)){
 	cluster.unique <- unique(mat$GRID.X[-grep("r",mat$GRID.X)])
   }
 
