@@ -116,7 +116,6 @@ TEST/condition1.info.txt\
 TEST/condition2.info.txt
 
 
-
 ### Run CRUP - norm
 
 Run 'Rscript CRUP.R -N ' to see all possible input parameters.
@@ -127,7 +126,7 @@ Run 'Rscript CRUP.R -N ' to see all possible input parameters.
 This function (input) normalizes and summarizes read counts from ChIP-seq experiments in a (100 bp) binned genome.
 The ChIP-seq experiments are listed in the required info file 'condition1.info.txt'.
 
-Run 'Rscript CRUP.R -N -f TEST/condition1.info.txt -g mm10 -s paired -o TEST/RESULTS/0_NORMALIZED_DATA/'
+#### Run 'Rscript CRUP.R -N -f TEST/condition1.info.txt -g mm10 -s paired -o TEST/RESULTS/0_NORMALIZED_DATA/'
 
 Output:
 
@@ -142,7 +141,7 @@ Run 'Rscript CRUP.R -P' to see all possible input parameters.
     
 #### Example run:
 
-Run 'Rscript CRUP.R -P -m TEST/RESULTS/0_NORMALIZED_DATA/condition1.data_matrix.rds -o TEST/RESULTS/1_RF_PREDICTIONS/CONDITION_1/'
+#### Run 'Rscript CRUP.R -P -m TEST/RESULTS/0_NORMALIZED_DATA/condition1.data_matrix.rds -o TEST/RESULTS/1_RF_PREDICTIONS/CONDITION_1/'
 
 Output:
 
@@ -165,14 +164,14 @@ Run 'Rscript CRUP.R -D' to see all possible input parameters.
 Step 1: \
 predict enhancers in another condition (e.g. 'condition2').
 
-Run 'Rscript CRUP.R -N -f TEST/condition2.info.txt -g mm10 -s paired -o TEST/RESULTS/0_NORMALIZED_DATA/'
+#### A) Run 'Rscript CRUP.R -N -f TEST/condition2.info.txt -g mm10 -s paired -o TEST/RESULTS/0_NORMALIZED_DATA/'
 
-Run 'Rscript CRUP.R -P -m TEST/RESULTS/0_NORMALIZED_DATA/condition2.data_matrix.rds -o TEST/RESULTS/1_RF_PREDICTIONS/CONDITION_2/'
+#### B) Run 'Rscript CRUP.R -P -m TEST/RESULTS/0_NORMALIZED_DATA/condition2.data_matrix.rds -o TEST/RESULTS/1_RF_PREDICTIONS/CONDITION_2/'
 
 Step 2:\
 identify condition-specific enhancer regions.
 
-Run 'Rscript CRUP.R -D -p TEST/RESULTS/1_RF_PREDICTIONS/CONDITION_1/prediction.rds,TEST/RESULTS/1_RF_PREDICTIONS/CONDITION_2/prediction.rds -o TEST/RESULTS/2_DIFFERENTIAL_ENHANCERS/ -n cond1,cond2'
+#### Run 'Rscript CRUP.R -D -p TEST/RESULTS/1_RF_PREDICTIONS/CONDITION_1/prediction.rds,TEST/RESULTS/1_RF_PREDICTIONS/CONDITION_2/prediction.rds -o TEST/RESULTS/2_DIFFERENTIAL_ENHANCERS/ -n cond1,cond2'
 
 Output:
 
@@ -199,7 +198,7 @@ Run 'Rscript CRUP.R -T' to see all possible input parameters.
 
 #### A) Example run with RNA-seq experiments in bam file format:\
 
-Run 'Rscript CRUP.R -T -r TEST/RESULTS/2_DIFFERENTIAL_ENHANCERS/dynamicEnh__w0_0.1__threshold_0.01.txt -g mm10 -s paired -E TEST/DATA/RNAseq/Condition1.bam,TEST/DATA/RNAseq/Condition2.bam -o TEST/RESULTS/3_REGULATORY_REGIONS/'
+#### Run 'Rscript CRUP.R -T -r TEST/RESULTS/2_DIFFERENTIAL_ENHANCERS/dynamicEnh__w0_0.1__threshold_0.01.txt -g mm10 -s paired -E TEST/DATA/RNAseq/Condition1.bam,TEST/DATA/RNAseq/Condition2.bam -o TEST/RESULTS/3_REGULATORY_REGIONS/'
 
 Output:
 
@@ -223,7 +222,7 @@ Output:
 
 #### B) Example run with already summarized RNA-seq experiments:
 
-Run 'Rscript CRUP.R -T -r TEST/RESULTS/2_DIFFERENTIAL_ENHANCERS/dynamicEnh__w0_0.1__threshold_0.01.txt -e TEST/RESULTS/3_REGULATORY_REGIONS/gene_expression.rds -o TEST/RESULTS/3_REGULATORY_REGIONS/'
+#### Run 'Rscript CRUP.R -T -r TEST/RESULTS/2_DIFFERENTIAL_ENHANCERS/dynamicEnh__w0_0.1__threshold_0.01.txt -e TEST/RESULTS/3_REGULATORY_REGIONS/gene_expression.rds -o TEST/RESULTS/3_REGULATORY_REGIONS/'
 
 Output:
 
