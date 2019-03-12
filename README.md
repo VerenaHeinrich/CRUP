@@ -206,16 +206,16 @@ Output:
 > 'gene_expression.rds'
 > 2. dynamic regulatory units in txt format:\
 > 'RegulatoryUnits.txt'
-> 	- 'seqnames'            : chr of dynamic enhancer region
-> 	- 'start'               : start of dynamic enhancer region
-> 	- 'end'                 : end of dynamic enhancer region
-> 	- 'width'               : width of dynamic enhancer region
-> 	- 'strand'              : strand of dynamic enhancer region
-> 	- 'cluster'             : associated cluster of dynamic enhancer region
-> 	- 'TAD_COORDINATES'     : coordinates of topologically associated domain around dynamic enhancer region
-> 	- 'CORRELATED_GENE'     : ID of the gene that is correlated with dynamic enhancer region
-> 	- 'CORRELATION'         : correlation value
-> 	- best probability values for each region per sample
+>  - 'seqnames'            : chr of dynamic enhancer region
+>  - 'start'               : start of dynamic enhancer region
+>  - 'end'                 : end of dynamic enhancer region
+>  - 'width'               : width of dynamic enhancer region
+>  - 'strand'              : strand of dynamic enhancer region
+>  - 'cluster'             : associated cluster of dynamic enhancer region
+>  - 'TAD_COORDINATES'     : coordinates of topologically associated domain around dynamic enhancer region
+>  - 'CORRELATED_GENE'     : ID of the gene that is correlated with dynamic enhancer region
+>  - 'CORRELATION'         : correlation value
+>  - best probability values for each region per sample
 > 3. dynamic regulatory units in (ucsc) interaction format:\
 > 'RegulatoryUnits.interaction'
 
