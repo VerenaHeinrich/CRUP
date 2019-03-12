@@ -12,28 +12,28 @@ consisting of dynamically changing enhancers and target genes.
 
 CRUP-normalize -> CRUP-EP -> CRUP-ED -> CRUP-ET
 
-###### *Contact*
+#### *Contact*
 
 heinrich@molgen.mpg.de
 
-###### *Citation*
+#### *Citation*
 
 I you are using CRUP, please cite the following publication:\
 This is still unpublished work.
 
-Preprint:\
+#### *Preprint*
 https://www.biorxiv.org/content/biorxiv/early/2018/12/19/501601.full.pdf
 
 
-# **Run CRUP** 
+## **Run CRUP** 
 
-## CRUP - normalize
+### CRUP - normalize
 
 This function (input) normalizes and summarizes read counts from ChIP-seq experiments in a
 (100 bp) binned genome.
 
 
-## CRUP - EP ([E]nhancer [P]rediction)
+### CRUP - EP ([E]nhancer [P]rediction)
 
 The random forest-based enhancer classifier CRUP-EP (Enhancer Prediction) was developed so that 
 it can be applied across different cell types and species without the need of being re-trained.
@@ -41,7 +41,7 @@ To guarantee a good transferability, binned ChIP-seq counts are quantile normali
 sample that was used to train the classifier.
 
 
-## CRUP - ED ([E]nhancer [D]ynamics)
+### CRUP - ED ([E]nhancer [D]ynamics)
 
 CRUP-ED (Enhancer Dynamics) is based on enhancer probabilities and identifies
 condition-specific ('dynamic') enhancer regions by applying a permutation test.
@@ -49,13 +49,13 @@ Using empricial p-values, pattern of pairwise significance are build to cluster
 adjacent regions.
 
 
-## CRUP - ET ([E]nhancer ([T]argets)
+### CRUP - ET ([E]nhancer ([T]argets)
 
 The method CRUP - ET (Enhancer Targets) was developed to correlate condition-specific enhancers
 to normalized RNA-seq experiments.
 
 
-## Get the help message
+### Get the help message
 
 Run 'Rscript CRUP.R' or 'Rscript CRUP.R -h' to see all possible functions of CRUP.
 
@@ -67,7 +67,7 @@ Usage: CRUP.R [-[-norm|N]] [-[-prediction|P]] [-[-dynamics|D]] [-[-targets|T]] [
     -h|--help          this help message
 
     
-###### R PACKAGES
+#### R PACKAGES
 
 All required R packages are installed at the first run.\
 Nothing needs to be installed manually.
@@ -95,7 +95,7 @@ Nothing needs to be installed manually.
 > TxDb.Mmusculus.UCSC.mm10.knownGene
 
 
-# Preparation:
+## Preparation:
 
 The only preparation that has to be done is to create a tab delimited info file that lists
 the location of all ChIP-seq experiments in bam file format.
@@ -116,7 +116,7 @@ TEST/condition2.info.txt
 
 
 
-## Run CRUP - norm
+### Run CRUP - norm
 
 Run 'Rscript CRUP.R -N ' to see all possible input parameters:
 
@@ -131,7 +131,7 @@ Usage: CRUP.R [-[-norm|N]] [-[-cores|x] <integer>] [-[-file|f] <character>] [-[-
     -h|--help          this help message
 
 
-###### Example run:
+#### Example run:
 
 **Note: the presented example doesn't have any biological meaning.**
 
@@ -146,7 +146,7 @@ Output:
 'TEST/RESULTS/0_NORMALIZED_DATA/condition1.data_matrix.rds'
 
 
-## Run CRUP - EP       
+### Run CRUP - EP       
 
 Run 'Rscript CRUP.R -P' to see all possible input parameters:
 
@@ -161,7 +161,7 @@ Usage: CRUP.R [-[-prediction|P]] [-[-cores|x] <integer>] [-[-matrix|m] <characte
     -h|--help          this help message
     
 
-###### Example run:
+#### Example run:
 
 Run 'Rscript CRUP.R -P -m TEST/RESULTS/0_NORMALIZED_DATA/condition1.data_matrix.rds -o TEST/RESULTS/1_RF_PREDICTIONS/CONDITION_1/'
 
@@ -176,7 +176,7 @@ Output:
 > 'TEST/RESULTS/1_RF_PREDICTIONS/CONDITION_1/clusterEnh.bed'
 
 
-## Run CRUP - ED 
+### Run CRUP - ED 
 
 Run 'Rscript CRUP.R -D' to see all possible input parameters:
 
@@ -192,7 +192,7 @@ Usage: CRUP.R [-[-dynamics|D]] [-[-cores|x] <integer>] [-[-outdir|o] <character>
     -h|--help             this help message
 
 
-###### Example run:
+#### Example run:
 
 First: \
 predict enhancers in another condition (e.g. 'condition2').
@@ -225,7 +225,7 @@ Output:
 > 4. the main clusters (1,2, ..) and cluster 'U' ('ubiquitous') are additionally exported as separated .bed files
 
 
-## Run CRUP - ET
+### Run CRUP - ET
 
 Run 'Rscript CRUP.R -T' to see all possible input parameters:
 
@@ -244,7 +244,7 @@ CRUP.R [-[-targets|T]] [-[-cores|x] <integer>] [-[-genome|g] <character>] [-[-se
     -h|--help           this help message
 
 
-###### A) Example run with RNA-seq experiments in bam file format:\
+#### A) Example run with RNA-seq experiments in bam file format:\
 
 Run 'Rscript CRUP.R -T -r TEST/RESULTS/2_DIFFERENTIAL_ENHANCERS/dynamicEnh__w0_0.1__threshold_0.01.txt -g mm10 -s paired -E TEST/DATA/RNAseq/Condition1.bam,TEST/DATA/RNAseq/Condition2.bam -o TEST/RESULTS/3_REGULATORY_REGIONS/'
 
@@ -268,7 +268,7 @@ Output:
 > 'RegulatoryUnits.interaction'
 
 
-###### B) Example run with already summarized RNA-seq experiments:
+#### B) Example run with already summarized RNA-seq experiments:
 
 Run 'Rscript CRUP.R -T -r TEST/RESULTS/2_DIFFERENTIAL_ENHANCERS/dynamicEnh__w0_0.1__threshold_0.01.txt -e TEST/RESULTS/3_REGULATORY_REGIONS/gene_expression.rds -o TEST/RESULTS/3_REGULATORY_REGIONS/'
 
