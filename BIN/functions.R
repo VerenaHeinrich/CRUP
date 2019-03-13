@@ -420,12 +420,13 @@ get_tStatistic <- function(a, b, w_0){
     S   <-  sqrt(S_2)*sqrt(1/n_a + 1/n_b)
   }
   
+  diff = (mean_a-mean_b)
   S[which(S == 0)] <- 1/1000000 # a small number
-  res  <- sqrt((n_a*n_b)/(n_a + n_b))*(abs(mean_a - mean_b) - w_0)/S 
+  res  <- sqrt((n_a*n_b)/(n_a + n_b))*(abs(diff) - w_0)/S 
   
   #generate complete cases:
   res[is.infinite(res)]  <-  NA
-  res[res<0] = NA
+  #res[res<0] <- NA
 
   return(res)
 }  
@@ -459,7 +460,7 @@ get_empPvalues <- function(i, comb, w_0, IDs, probs, probs.shuffled){
 
 	# get two-sided pvalues:
   	ECDF <- ecdf(null_statistic)
-  	p.values <- ECDF(statistic)
+  	p.values <- 1-ECDF(statistic)
 
 	p.values[is.na(sign)] = 1
 	p.values[is.na(p.values)] = 1
