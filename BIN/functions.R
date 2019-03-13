@@ -381,178 +381,6 @@ get_probabiltyMatrix <- function(files, IDs){
 }
 
 
-##################################################################
-# function: get uninformative row indices
-##################################################################
-
-get_invalidIdx <- function(gr, w_0){
-  idx = which(rowVars(as.matrix(mcols(gr))) == 0 | rowMaxs(as.matrix(mcols(gr))) < w_0)
-  return(idx)
-}
-
-
-##################################################################
-# function: generate unique key (for numbers in a matrix)
-##################################################################
-
-get_uniqueKey <- function(m, IDs){
-
-  # length of (max) digits (after '.')
-  len_digits <- max(nchar(formatC(as.matrix(mcols(m)[1])))) + 1
-  
-  # round
-  m <- as.matrix(round(as.matrix(mcols(m)[,IDs])*10^(len_digits - 1),0))
-  
-  step <- 1/(10^(len_digits))
-  digits <- dim(m)[2]*(len_digits)
-  max.digits <- 15 #maximal number of digits...
-  
-  columns <- round(max.digits/(len_digits),0)
-  res.final <- c()
-  
-  count <- 1
-  repeat {
-    count.max <- (count - 1) + columns
-    
-    if (count.max >= dim(m)[2]) {
-      columns <- dim(m)[2] - count + 1
-    }
-    this.digits <- columns*(len_digits)
-    options(digits = this.digits)
-    
-    j <- 1
-    res <- 0
-    for (i in count:(count + columns - 1)) {
-      if (length(res) == 0) {
-        res <- as.matrix(m[,i])*step^j
-      }else{
-        res <- res + as.matrix(m[,i])*step^j
-      }
-      j <- j + 1
-    }
-    count <- count + this.digits/(len_digits)
-    
-    # create character:
-    res_char <- formatC(res*10^this.digits,
-                        width = this.digits,
-                        digits = 0, 
-                        format = "f",
-                        flag = "0",
-                        mode = "double"
-                      )
-    
-    # combine results:
-    if (length(res.final) == 0) {
-      res.final <- res_char
-    }else{
-      res.final <- paste0(res.final, res_char)
-    }
-    
-    if (nchar(res.final[1]) == (dim(m)[2]*len_digits)) break
-  }
-  return(res.final)
-}
-
-
-
-
-
-##################################################################
-# function: get test statistic distribution
-##################################################################
-
-get_distribution <- function(values, keys, IDs.1, IDs.2, key.1, key.2, w_0){
-  
-  keys.comb <- paste0(keys[[key.1]],keys[[key.2]])
-  distr <- get_tStatistic( mcols(values[duplicated(keys.comb) == F])[, IDs.1], 
-                           mcols(values[duplicated(keys.comb) == F])[, IDs.2], 
-                           w_0
-  )
-  names(distr) <- keys.comb[duplicated(keys.comb) == F]
-  distr <- distr[keys.comb]
-  
-  return(distr)
-}
-
-
-##################################################################
-# function: compute empirical p values
-##################################################################
-
-compute_empPvalue <- function(tab, dim, x){
-  res <- 1
-  if (!is.na(x)) {
-    idx <- which(as.numeric(names(tab)) >= abs(x))
-    res <- (sum(tab[idx]) + 1)/(dim + 1)
-    res <- (res*sign(x))
-  }
-  return(res)
-}
-
-
-##################################################################
-# function: get empirical p values
-##################################################################
-
-get_empPvalues <- function(i, comb, w_0, IDs, probs, probs.shuffled){
-
-	# this pairwise samples:
-	IDs.1 = IDs[[comb[,i][1]]]
-  	IDs.2 = IDs[[comb[,i][2]]]
-			
-	# true statistic:
-	statistic <- get_tStatistic(  	probs[,IDs.1], 
-                            		probs[,IDs.2], 
-					w_0
-	)
-
-	# statistic for shuffled distribution (null distribution):
-	null_statistic <- get_tStatistic( probs.shuffled[,IDs.1], 
-					  probs.shuffled[,IDs.2], 
-		                    	  w_0
-	)
-
-	# get sign (+1 or -1 or NA):
-	sign <- sign(rowMeans(as.matrix(probs[,IDs.1]),na.rm = T) - rowMeans(as.matrix(probs[,IDs.2]),na.rm = T))
-	sign[which(sign==0)] = NA
-
-	# get two-sided pvalues:
-  	ECDF <- ecdf(null_statistic)
-  	p.values <- 1-ECDF((statistic))
-
-	p.values[is.na(sign)] = 1
-	p.values[is.na(p.values)] = 1
-
-	return(list(p.values=p.values, sign=sign))
-}
-
-
-##################################################################
-# function: get pairwise p values
-##################################################################
-
-get_pairwisePvalues <- function(probs, IDs, w_0, cores){
-
-  # define all pairwise combinations:
-  comb <- combn(seq(length(IDs)),2)
-
-  # generate null distribution:
-  probs.shuffled <- apply(mcols(probs), 2, sample)
- 
-  # get empirical p.values:
-  p.values <- mclapply( as.list(seq(dim(comb)[2])), mc.cores = cores,
-			function(i) get_empPvalues( 	i,
-						 	comb,
-							w_0, 
-							IDs,
-							mcols(probs),
-							probs.shuffled)
-                        )
-  names(p.values) = apply(comb,2, function(x) paste(x, collapse = ","))
-
-  return(p.values)
-}
-
 
 ##################################################################
 # function: compute t test statistic
@@ -597,9 +425,74 @@ get_tStatistic <- function(a, b, w_0){
   
   #generate complete cases:
   res[is.infinite(res)]  <-  NA
-  
+  res[res<0] = NA
+
   return(res)
 }  
+
+
+##################################################################
+# function: get empirical p values
+##################################################################
+
+get_empPvalues <- function(i, comb, w_0, IDs, probs, probs.shuffled){
+
+	# this pairwise samples:
+	IDs.1 = IDs[[comb[,i][1]]]
+  	IDs.2 = IDs[[comb[,i][2]]]
+			
+	# true statistic:
+	statistic <- get_tStatistic(  	probs[,IDs.1], 
+                            		probs[,IDs.2], 
+					w_0
+	)
+
+	# statistic for shuffled distribution (null distribution):
+	null_statistic <- get_tStatistic( probs.shuffled[,IDs.1], 
+					  probs.shuffled[,IDs.2], 
+		                    	  w_0
+	)
+
+	# get sign (+1 or -1 or NA):
+	sign <- sign(rowMeans(as.matrix(probs[,IDs.1]),na.rm = T) - rowMeans(as.matrix(probs[,IDs.2]),na.rm = T))
+	sign[which(sign==0)] = NA
+
+	# get two-sided pvalues:
+  	ECDF <- ecdf(null_statistic)
+  	p.values <- ECDF(statistic)
+
+	p.values[is.na(sign)] = 1
+	p.values[is.na(p.values)] = 1
+
+	return(list(p.values=p.values, sign=sign))
+}
+
+
+##################################################################
+# function: get pairwise p values
+##################################################################
+
+get_pairwisePvalues <- function(probs, IDs, w_0, cores){
+
+  # define all pairwise combinations:
+  comb <- combn(seq(length(IDs)),2)
+
+  # generate null distribution:
+  probs.shuffled <- apply(mcols(probs), 2, sample)
+ 
+  # get empirical p.values:
+  p.values <- mclapply( as.list(seq(dim(comb)[2])), mc.cores = cores,
+			function(i) get_empPvalues( 	i,
+						 	comb,
+							w_0, 
+							IDs,
+							mcols(probs),
+							probs.shuffled)
+                        )
+  names(p.values) = apply(comb,2, function(x) paste(x, collapse = ","))
+
+  return(p.values)
+}
 
 ##################################################################
 # function: function to translate significant peak pattern
