@@ -140,10 +140,8 @@ endPart()
 
 startPart("Read enhancer probabilites for all samples and conditions")
 probs <- get_probabiltyMatrix(files, IDs)
-
-# add background with all probs = 0
-mcols(probs)$background <- 0
 IDs[[length(IDs)+1]] <- 'background'
+
 endPart()
 
 ##################################################################
@@ -189,7 +187,7 @@ cat(paste0(skip(), "Output 1 - save condition-specific enhancer regions to:  ", 
 write.table(data.frame(peaks)[, c(	 GR_header,
 					 "best.p.value",
  					 "cluster",
-					 setdiff(unlist(IDs), "background"))],
+					 unlist(IDs)[-length(IDs)])],
 				 file = out.txt, quote = F, row.names = F, sep = "\t")
 done()
 
@@ -210,8 +208,7 @@ for(this in unique(mcols(peaks)$cluster)){
 done()
 
 # output 4: a visual summary of all dynamically changing enhancers:
-mcols(peaks) <- mcols(peaks)[-grep("background",colnames(mcols(peaks)))]
-IDs=IDs[1:(length(IDs)-1)]
+IDs=unlist(IDs)[-length(IDs)]
 
 LABEL_COND <- c(gsub("_.*","", unlist(IDs)), "cluster")
 LABEL_REP <- c(gsub(".*_", "", unlist(IDs)), "")

@@ -425,8 +425,7 @@ get_tStatistic <- function(a, b, w_0){
   res  <- sqrt((n_a*n_b)/(n_a + n_b))*(abs(diff) - w_0)/S 
   
   #generate complete cases:
-  res[is.infinite(res)]  <-  NA
-  #res[res<0] <- 0
+  res[is.infinite(res)]  <-  0
 
   return(res)
 }  
@@ -441,22 +440,32 @@ get_empPvalues <- function(i, comb, w_0, IDs, probs, probs.shuffled){
 	# this pairwise samples:
 	IDs.1 = IDs[[comb[,i][1]]]
   	IDs.2 = IDs[[comb[,i][2]]]
-			
-	# true statistic:
-	statistic <- get_tStatistic(  	probs[,IDs.1], 
-                            		probs[,IDs.2], 
-					w_0
-	)
 
 	# statistic for shuffled distribution (null distribution):
 	null_statistic <- c()
 	if(IDs.1 != 'background' & IDs.2 != 'background'){
+
+		# true statistic:
+		statistic <- get_tStatistic(  	probs[,IDs.1], 	
+	                            		probs[,IDs.2], 
+						w_0
+		)
+
+		# random statistic:
 		null_statistic <- get_tStatistic( probs.shuffled[,IDs.1], 
 						  probs.shuffled[,IDs.2], 
 			                    	  w_0
 		)
 	}else{
 		if(IDs.1 == 'background'){
+
+			# true statistic:
+			statistic <- get_tStatistic(  	rep(0,nrow(probs)), 	
+		                            		probs[,IDs.2], 
+							w_0
+			)
+
+			# random statistic:
 			IDs.1.alt = IDs[[ setdiff(seq(length(IDs)), c(comb[,i][2], length(IDs)))[1] ]]
 			null_statistic <- get_tStatistic( probs.shuffled[,IDs.1.alt], 
 							  probs.shuffled[,IDs.2], 
@@ -465,6 +474,13 @@ get_empPvalues <- function(i, comb, w_0, IDs, probs, probs.shuffled){
 		}
 
 		if(IDs.2 == 'background'){
+
+			# true statistic:
+			statistic <- get_tStatistic(	probs[,IDs.1], 
+							rep(0,nrow(probs)),
+							w_0
+			)
+
 			IDs.2.alt = IDs[[ setdiff(seq(length(IDs)), c(comb[,i][1], length(IDs)))[1] ]]
 			null_statistic <- get_tStatistic( probs.shuffled[,IDs.1], 
 							  probs.shuffled[,IDs.2.alt], 
@@ -562,7 +578,8 @@ get_peakPattern <- function(p, threshold, IDs, cores){
   comb <- combn(seq(1:length(IDs)),2)
   comb_full <- cbind(comb, comb[c(2,1),])
   comb_full <- comb_full[,order(comb_full[1,], comb_full[2,])]
-  
+  comb_full <- comb_full[,-which(comb_full[1,] == length(IDs))]  
+
   # emtpy pattern vector:
   pattern_empty <- data.frame(t(rep(0,dim(comb_full)[2])))
   colnames(pattern_empty) <- apply(comb_full,2, function(x) paste(x,collapse = ","))
@@ -665,19 +682,21 @@ get_combinedDiffPeaks <- function(probs, p, pattern, IDs, len){
   peaks <- combine_peaks(peaks, flank = 0)
   
   # get mean of original enhancer probabilities in combined intervals:
-  overlaps <- findOverlaps(probs, peaks)
-  sites <- probs[queryHits(overlaps)]
-
-  for(this.ID in unlist(IDs)){
-	this.mean <- aggregate(mcols(sites)[,this.ID], list(subjectHits(overlaps)), mean)
-	mcols(peaks)[, this.ID] <- this.mean$x
-  } 
+  #overlaps <- findOverlaps(probs, peaks)
+  #sites <- probs[queryHits(overlaps)]
+  #
+  # for(this.ID in unlist(IDs)){
+  #	this.mean <- aggregate(mcols(sites)[,this.ID], list(subjectHits(overlaps)), mean)
+  #	mcols(peaks)[, this.ID] <- this.mean$x
+  # }
 
   colnames(elementMetadata(peaks))[1:3] <- c(   "best.p.value",
 						 "index", 
 	 					 "significance.pattern"
 						)
 
+  # save enhancer probability value from pos with smalles pvalue
+  elementMetadata(peaks)[, unlist(IDs)[-length(IDs)]] <-  mcols(probs[mcols(peaks)$index])
 
   return(peaks)
 }
@@ -700,7 +719,82 @@ get_super.pattern <- function(pattern, len.IDs){
 # function: sort differential region by pattern
 ##################################################################
 
+
 get_sorted_peaks <- function(peaks, IDs){
+
+	# add "super"-clusters to peaks:
+	mcols(peaks)$super.pattern = NA
+	mcols(peaks)$cluster = NA
+
+	# get super pattern:
+	pattern <- mcols(peaks)$significance.pattern
+	pattern.mat <- do.call(rbind, lapply(pattern, function(x) as.numeric(unlist(strsplit(x, "")))))
+
+	# specifiy all possible pairwise combinations:
+	comb <- combn(seq(1:length(IDs)),2)
+	comb_full <- cbind(comb, comb[c(2,1),])
+	comb_full <- comb_full[,order(comb_full[1,], comb_full[2,])]
+	comb_full <- comb_full[,-which(comb_full[1,] == length(IDs))]  
+
+	# get ubiquitous pattern:
+	pattern.idx.ubi <- which(comb_full[2,]==length(IDs))
+	idx.ubi <- which(rowSums(pattern.mat[, pattern.idx.ubi])==length(pattern.idx.ubi))
+	mcols(peaks)$cluster[idx.ubi] = "U"
+	mcols(peaks)$super.cluster[idx.ubi] = rep(paste(rep(1,length(pattern.idx.ubi)),collapse=""), length(idx.ubi))
+	mcols(peaks)$super.pattern[idx.ubi] = rep(paste(rep(1,length(pattern.idx.ubi)),collapse=""), length(idx.ubi))
+
+	# now assign the differential cluster:
+	pattern.mat.r <- pattern.mat[,-pattern.idx.ubi]
+	pattern.r <- apply(pattern.mat.r, 1, function(x) paste(x, collapse=""))
+
+	# generate super pattern
+	super.pattern <- unlist(lapply(pattern.r, function(x) get_super.pattern(x, (length(IDs)-1))))
+	super.pattern.mat <- do.call(rbind, lapply(super.pattern, function(x) as.numeric(unlist(strsplit(x, "")))))
+
+	super.cluster <- c(which(rowSums(super.pattern.mat)==1), which(super.pattern == paste0(paste0(rep(1, (length(IDs)-1)), collapse=""), 0)))
+	super.cluster.table <- sort(table(super.pattern[super.cluster]), decreasing=T)
+
+	# assign super pattern:	
+	for(this in unique(super.pattern[super.cluster])){
+		mcols(peaks)$super.pattern[which(super.pattern==this)] = this
+		mcols(peaks)$cluster[which(super.pattern==this)] = which(names(super.cluster.table) == this)
+	}
+
+	# assign all the other cluster names (more complex clusters, where more than one condition is significantly different):
+	for(this in unique(pattern.r[-super.cluster])){
+		if(grepl("1",this)){
+			mcols(peaks)$cluster[which(pattern==this)] = paste0("r",which(names(sort(table(pattern.r[-super.cluster]), decreasing=T)) == this))
+		}
+	}
+
+	# first: order by super pattern:
+	#super.pattern <- super.pattern[which(rowSums(super.pattern.mat)>0)]
+	#super.pattern.mat <- super.pattern.mat[which(rowSums(super.pattern.mat)>0),]
+
+	super.pattern.mat.order=apply(super.pattern.mat , 1, function(x) which(x==1)[1])
+	peaks=peaks[order(super.pattern.mat.order)]
+	super.pattern=super.pattern[order(super.pattern.mat.order)]
+
+	# second: sort within each super pattern:
+	order=c()
+	for(this.pattern in unique(super.pattern)){
+		this=which(super.pattern == this.pattern)
+		this.mat=do.call(rbind, lapply(pattern.r[this], function(x) as.numeric(unlist(strsplit(x, "")))))
+		order=c(order, this[order(rowSums(this.mat))])
+	}
+
+	peaks<-peaks[order]
+	
+	# remove NA:
+	peaks <- peaks[-which(is.na(mcols(peaks)$cluster))]
+
+	#ubiquitous.peaks <- peaks[which(mcols(peaks)$cluster=="U")]
+	#peaks <- c(peaks[-which(mcols(peaks)$cluster=="U")], ubiquitous.peaks)
+
+	return(peaks)
+}
+
+get_sorted_peaks_old <- function(peaks, IDs){
 
 	# get super pattern:
 	pattern <- mcols(peaks)$significance.pattern
