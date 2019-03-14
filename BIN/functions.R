@@ -546,7 +546,7 @@ get_positionPattern <- function(p, i, threshold, pattern_empty, comb){
   this.pvalue <- do.call(rbind, lapply(p, function(x) x$p.values[pos]))
   this.sign <- do.call(rbind, lapply(p, function(x) x$sign[pos]))
 
-  idx <- (this.pvalue <= 0.05) == T
+  idx <- (this.pvalue <= threshold) == T
   idx.prod <- rowProds(idx)
   
   # all flanking positions have to be significant as well:
