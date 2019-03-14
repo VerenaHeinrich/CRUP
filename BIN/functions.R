@@ -443,6 +443,7 @@ get_empPvalues <- function(i, comb, w_0, IDs, probs, probs.shuffled){
 
 	# statistic for shuffled distribution (null distribution):
 	null_statistic <- c()
+	sign <- c()
 	if(IDs.1 != 'background' & IDs.2 != 'background'){
 
 		# true statistic:
@@ -456,6 +457,11 @@ get_empPvalues <- function(i, comb, w_0, IDs, probs, probs.shuffled){
 						  probs.shuffled[,IDs.2], 
 			                    	  w_0
 		)
+
+		# get sign (+1 or -1 or NA):
+		sign <- sign(rowMeans(as.matrix(probs[,IDs.1]),na.rm = T) - rowMeans(as.matrix(probs[,IDs.2]),na.rm = T))
+		sign[which(sign==0)] = NA
+
 	}else{
 		if(IDs.1 == 'background'){
 
@@ -471,6 +477,10 @@ get_empPvalues <- function(i, comb, w_0, IDs, probs, probs.shuffled){
 							  probs.shuffled[,IDs.2], 
 				                    	  w_0
 			)
+		
+			# get sign (+1 or -1 or NA):
+			sign <- sign(rowMeans(as.matrix(probs[,IDs.1.alt]),na.rm = T) - rowMeans(as.matrix(probs[,IDs.2]),na.rm = T))
+			sign[which(sign==0)] = NA
 		}
 
 		if(IDs.2 == 'background'){
@@ -486,12 +496,13 @@ get_empPvalues <- function(i, comb, w_0, IDs, probs, probs.shuffled){
 							  probs.shuffled[,IDs.2.alt], 
 				                    	  w_0
 			)
+
+			# get sign (+1 or -1 or NA):
+			sign <- sign(rowMeans(as.matrix(probs[,IDs.1]),na.rm = T) - rowMeans(as.matrix(probs[,IDs.2.alt]),na.rm = T))
+			sign[which(sign==0)] = NA
 		}
 	}
 
-	# get sign (+1 or -1 or NA):
-	sign <- sign(rowMeans(as.matrix(probs[,IDs.1]),na.rm = T) - rowMeans(as.matrix(probs[,IDs.2]),na.rm = T))
-	sign[which(sign==0)] = NA
 
 	# get two-sided pvalues:
   	ECDF <- ecdf(null_statistic)
