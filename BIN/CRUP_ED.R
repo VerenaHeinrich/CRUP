@@ -172,11 +172,6 @@ if (is.null(pattern)) {
 
 cat(paste0(skip(), "combine peaks by significance pattern"))
 peaks <- get_combinedDiffPeaks(probs, p, pattern, IDs, len)
-colnames(elementMetadata(peaks)) <- c(  "best.p.value",
-					 "index", 
- 					 "significance.pattern"
-					)
-elementMetadata(peaks)[, unlist(IDs)] <-  mcols(probs[mcols(peaks)$index])
 done()
 
 cat(paste0(skip(), "sort regions by significance peak pattern"))

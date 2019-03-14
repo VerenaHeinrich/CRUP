@@ -426,7 +426,7 @@ get_tStatistic <- function(a, b, w_0){
   
   #generate complete cases:
   res[is.infinite(res)]  <-  NA
-  #res[res<0] <- NA
+  #res[res<0] <- 0
 
   return(res)
 }  
@@ -449,10 +449,29 @@ get_empPvalues <- function(i, comb, w_0, IDs, probs, probs.shuffled){
 	)
 
 	# statistic for shuffled distribution (null distribution):
-	null_statistic <- get_tStatistic( probs.shuffled[,IDs.1], 
-					  probs.shuffled[,IDs.2], 
-		                    	  w_0
-	)
+	null_statistic <- c()
+	if(IDs.1 != 'background' & IDs.2 != 'background'){
+		null_statistic <- get_tStatistic( probs.shuffled[,IDs.1], 
+						  probs.shuffled[,IDs.2], 
+			                    	  w_0
+		)
+	}else{
+		if(IDs.1 == 'background'){
+			IDs.1.alt = IDs[[ setdiff(seq(length(IDs)), c(comb[,i][2], length(IDs)))[1] ]]
+			null_statistic <- get_tStatistic( probs.shuffled[,IDs.1.alt], 
+							  probs.shuffled[,IDs.2], 
+				                    	  w_0
+			)
+		}
+
+		if(IDs.2 == 'background'){
+			IDs.2.alt = IDs[[ setdiff(seq(length(IDs)), c(comb[,i][1], length(IDs)))[1] ]]
+			null_statistic <- get_tStatistic( probs.shuffled[,IDs.1], 
+							  probs.shuffled[,IDs.2.alt], 
+				                    	  w_0
+			)
+		}
+	}
 
 	# get sign (+1 or -1 or NA):
 	sign <- sign(rowMeans(as.matrix(probs[,IDs.1]),na.rm = T) - rowMeans(as.matrix(probs[,IDs.2]),na.rm = T))
@@ -501,7 +520,7 @@ get_pairwisePvalues <- function(probs, IDs, w_0, cores){
 # output: vector \in [0,1]
 ##################################################################
 
-get_positionPattern <- function(p, i, t, pattern_empty, comb){
+get_positionPattern <- function(p, i, threshold, pattern_empty, comb){
   
   # define region with flanking positions
   n.flank=2
@@ -511,7 +530,7 @@ get_positionPattern <- function(p, i, t, pattern_empty, comb){
   this.pvalue <- do.call(rbind, lapply(p, function(x) x$p.values[pos]))
   this.sign <- do.call(rbind, lapply(p, function(x) x$sign[pos]))
 
-  idx <- (this.pvalue <= t) == T
+  idx <- (this.pvalue <= 0.05) == T
   idx.prod <- rowProds(idx)
   
   # all flanking positions have to be significant as well:
@@ -614,13 +633,13 @@ combine_peaks <- function(x, flank){
 # function: combine peaks by significance pattern
 ##################################################################
 
-get_combinedDiffPeaks <- function(gr, p, pattern, IDs, len){
+get_combinedDiffPeaks <- function(probs, p, pattern, IDs, len){
  
   # reduce GRanges()
   idx <- as.numeric(rownames(pattern))
-  gr <- gr[idx,]
+  gr <- probs[idx,]
 
-  # extend by flanking positions (because flankign positions are also significant):
+  # extend by flanking positions (because flanking positions are also significant):
   n.flank <- 2	
   w <- width(gr[1])
   start(gr) <- start(gr) - ( n.flank*w )
@@ -629,7 +648,7 @@ get_combinedDiffPeaks <- function(gr, p, pattern, IDs, len){
   # get pvalue from all pairwise comparisons
   score <- do.call(cbind, lapply(p, function(x) x$p.values[idx]))
   
-  # add minimim pvalue, bin index and pattern to each bin:
+  # add minimim pvalue (score), bin index and pattern to each bin:
   mcols(gr)$score <- rowMins(abs(score))
   mcols(gr)$index <- idx
   mcols(gr)$pattern <- apply(pattern, 1, function(x) paste0(x, collapse = ""))
@@ -637,7 +656,7 @@ get_combinedDiffPeaks <- function(gr, p, pattern, IDs, len){
   # split by p.value pattern
   peaks.split = split(gr, mcols(gr)$pattern)
   
-  # combine regions (with a flexible flanking area of length len)
+  # combine regions (with a flexible flanking area of length 'len')
   peaks = mclapply( peaks.split, 
                     function(x) combine_peaks(x, flank = len), 
                     mc.cores = cores
@@ -645,6 +664,21 @@ get_combinedDiffPeaks <- function(gr, p, pattern, IDs, len){
   peaks <- c(do.call("c", unname(peaks)))
   peaks <- combine_peaks(peaks, flank = 0)
   
+  # get mean of original enhancer probabilities in combined intervals:
+  overlaps <- findOverlaps(probs, peaks)
+  sites <- probs[queryHits(overlaps)]
+
+  for(this.ID in unlist(IDs)){
+	this.mean <- aggregate(mcols(sites)[,this.ID], list(subjectHits(overlaps)), mean)
+	mcols(peaks)[, this.ID] <- this.mean$x
+  } 
+
+  colnames(elementMetadata(peaks))[1:3] <- c(   "best.p.value",
+						 "index", 
+	 					 "significance.pattern"
+						)
+
+
   return(peaks)
 }
 
@@ -685,13 +719,13 @@ get_sorted_peaks <- function(peaks, IDs){
 	mcols(peaks)$cluster = NA
 	for(this in unique(super.pattern[super.cluster])){
 
+		# assign super pattern:
+		mcols(peaks)$super.pattern[which(super.pattern==this)] = this
+
 		# ubiquitous regions (enhancers that are active in every condition):
 		if(this == super.pattern.ubi){
 			mcols(peaks)$cluster[which(super.pattern==this)] = "U"
 		}else{
-
-			# assign super pattern:
-			mcols(peaks)$super.pattern[which(super.pattern==this)] = this
 
 			# assign cluster name for super pattern (according to size)
 			mcols(peaks)$cluster[which(super.pattern==this)] = which(names(super.cluster.table) == this)
