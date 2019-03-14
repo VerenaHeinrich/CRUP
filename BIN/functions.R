@@ -575,7 +575,9 @@ get_positionPattern <- function(p, i, threshold, pattern_empty, comb){
     pattern <- pattern_empty
     pattern[,label] <- 1
     
-    return(data.frame(pos[(n.flank+1)], pattern))
+    if(length(pattern) == length(pattern_empty)){
+    	return(data.frame(pos[(n.flank+1)], pattern))
+    }
   }
 }
 
