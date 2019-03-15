@@ -425,7 +425,7 @@ get_tStatistic <- function(a, b, w_0){
   res  <- sqrt((n_a*n_b)/(n_a + n_b))*(abs(diff) - w_0)/S 
   
   #generate complete cases:
-  res[is.infinite(res)]  <-  0
+  res[is.infinite(res)]  <-  NA
 
   return(res)
 }  
@@ -444,7 +444,7 @@ get_empPvalues <- function(i, comb, w_0, IDs, probs, probs.shuffled){
 	# statistic for shuffled distribution (null distribution):
 	null_statistic <- c()
 	sign <- c()
-	if(IDs.1 != 'background' & IDs.2 != 'background'){
+	if(IDs.1[1] != 'background' & IDs.2[1] != 'background'){
 
 		# true statistic:
 		statistic <- get_tStatistic(  	probs[,IDs.1], 	
@@ -463,49 +463,47 @@ get_empPvalues <- function(i, comb, w_0, IDs, probs, probs.shuffled){
 		sign[which(sign==0)] = NA
 
 	}else{
-		if(IDs.1 == 'background'){
+		if(IDs.1[1] == 'background'){
 
 			# true statistic:
 			statistic <- get_tStatistic(  	rep(0,nrow(probs)), 	
 		                            		probs[,IDs.2], 
-							w_0
+							w_0=0.5
 			)
 
 			# random statistic:
-			IDs.1.alt = IDs[[ setdiff(seq(length(IDs)), c(comb[,i][2], length(IDs)))[1] ]]
-			null_statistic <- get_tStatistic( probs.shuffled[,IDs.1.alt], 
+			null_statistic <- get_tStatistic( rep(0,nrow(probs)), 
 							  probs.shuffled[,IDs.2], 
-				                    	  w_0
+				                    	  w_0=0.5
 			)
 		
 			# get sign (+1 or -1 or NA):
-			sign <- sign(rowMeans(as.matrix(probs[,IDs.1.alt]),na.rm = T) - rowMeans(as.matrix(probs[,IDs.2]),na.rm = T))
+			sign <- sign(rowMeans(as.matrix(rep(0,nrow(probs))),na.rm = T) - rowMeans(as.matrix(probs[,IDs.2]),na.rm = T))
 			sign[which(sign==0)] = NA
 		}
 
-		if(IDs.2 == 'background'){
+		if(IDs.2[1] == 'background'){
 
 			# true statistic:
 			statistic <- get_tStatistic(	probs[,IDs.1], 
 							rep(0,nrow(probs)),
-							w_0
+							w_0=0.5
 			)
 
-			IDs.2.alt = IDs[[ setdiff(seq(length(IDs)), c(comb[,i][1], length(IDs)))[1] ]]
 			null_statistic <- get_tStatistic( probs.shuffled[,IDs.1], 
-							  probs.shuffled[,IDs.2.alt], 
-				                    	  w_0
+							  rep(0,nrow(probs)), 
+				                    	  w_0=0.5
 			)
 
 			# get sign (+1 or -1 or NA):
-			sign <- sign(rowMeans(as.matrix(probs[,IDs.1]),na.rm = T) - rowMeans(as.matrix(probs[,IDs.2.alt]),na.rm = T))
+			sign <- sign(rowMeans(as.matrix(probs[,IDs.1]),na.rm = T) - rowMeans(as.matrix(rep(0,nrow(probs))),na.rm = T))
 			sign[which(sign==0)] = NA
 		}
 	}
 
 
 	# get two-sided pvalues:
-  	ECDF <- ecdf(null_statistic)
+  	ECDF <- ecdf(null_statistic+min(null_statistic))
   	p.values <- 1-ECDF(statistic)
 
 	p.values[is.na(sign)] = 1
@@ -513,6 +511,7 @@ get_empPvalues <- function(i, comb, w_0, IDs, probs, probs.shuffled){
 
 	return(list(p.values=p.values, sign=sign))
 }
+
 
 
 ##################################################################
@@ -525,7 +524,8 @@ get_pairwisePvalues <- function(probs, IDs, w_0, cores){
   comb <- combn(seq(length(IDs)),2)
 
   # generate null distribution:
-  probs.shuffled <- apply(mcols(probs), 2, sample)
+  #probs.shuffled <- apply(mcols(probs), 2, sample)
+  probs.shuffled <- apply(mcols(probs), 2, function(x) sample(x, 1000000))
  
   # get empirical p.values:
   p.values <- mclapply( as.list(seq(dim(comb)[2])), mc.cores = cores,
@@ -557,7 +557,11 @@ get_positionPattern <- function(p, i, threshold, pattern_empty, comb){
   this.pvalue <- do.call(rbind, lapply(p, function(x) x$p.values[pos]))
   this.sign <- do.call(rbind, lapply(p, function(x) x$sign[pos]))
 
-  idx <- (this.pvalue <= threshold) == T
+  #idx <- (this.pvalue <= threshold) == T
+  t.matrix=matrix(0.05, nrow=nrow(this.pvalue),ncol=ncol(this.pvalue))
+  t.matrix[,(n.flank+1)] <-threshold
+  idx <- (this.pvalue <= t.matrix) == T
+
   idx.prod <- rowProds(idx)
   
   # all flanking positions have to be significant as well:
@@ -735,7 +739,7 @@ get_super.pattern <- function(pattern, len.IDs){
 
 get_sorted_peaks <- function(peaks, IDs){
 
-	# add "super"-clusters to peaks:
+	# add new columns to object:
 	mcols(peaks)$super.pattern = NA
 	mcols(peaks)$cluster = NA
 
@@ -753,7 +757,6 @@ get_sorted_peaks <- function(peaks, IDs){
 	pattern.idx.ubi <- which(comb_full[2,]==length(IDs))
 	idx.ubi <- which(rowSums(pattern.mat[, pattern.idx.ubi])==length(pattern.idx.ubi))
 	mcols(peaks)$cluster[idx.ubi] = "U"
-	mcols(peaks)$super.cluster[idx.ubi] = rep(paste(rep(1,length(pattern.idx.ubi)),collapse=""), length(idx.ubi))
 	mcols(peaks)$super.pattern[idx.ubi] = rep(paste(rep(1,length(pattern.idx.ubi)),collapse=""), length(idx.ubi))
 
 	# now assign the differential cluster:
