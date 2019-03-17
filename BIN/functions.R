@@ -713,7 +713,7 @@ get_combinedDiffPeaks <- function(probs, p, pattern, IDs, len){
 						)
 
   # save enhancer probability value from pos with smalles pvalue
-  elementMetadata(peaks)[, unlist(IDs)[-length(IDs)]] <-  mcols(probs[mcols(peaks)$index])
+  elementMetadata(peaks)[, unlist(IDs[-length(IDs)])] <-  mcols(probs[mcols(peaks)$index])
 
   return(peaks)
 }
