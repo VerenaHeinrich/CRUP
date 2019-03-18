@@ -503,7 +503,7 @@ get_empPvalues <- function(i, comb, w_0, IDs, probs, probs.shuffled){
 
 
 	# get two-sided pvalues:
-  	ECDF <- ecdf(null_statistic+min(null_statistic))
+  	ECDF <- ecdf(null_statistic)
   	p.values <- 1-ECDF(statistic)
 
 	p.values[is.na(sign)] = 1
@@ -525,7 +525,7 @@ get_pairwisePvalues <- function(probs, IDs, w_0, cores){
 
   # generate null distribution:
   #probs.shuffled <- apply(mcols(probs), 2, sample)
-  probs.shuffled <- apply(mcols(probs), 2, function(x) sample(x, 1000000))
+  probs.shuffled <- apply(mcols(probs), 2,  sample)
  
   # get empirical p.values:
   p.values <- mclapply( as.list(seq(dim(comb)[2])), mc.cores = cores,
@@ -555,20 +555,21 @@ get_positionPattern <- function(p, i, threshold, pattern_empty, comb){
   
   # all pairwise p-values at position i and +/- 2 positions:
   this.pvalue <- do.call(rbind, lapply(p, function(x) x$p.values[pos]))
-  this.sign <- do.call(rbind, lapply(p, function(x) x$sign[pos]))
 
-  #idx <- (this.pvalue <= threshold) == T
-  t.matrix=matrix(0.05, nrow=nrow(this.pvalue),ncol=ncol(this.pvalue))
-  t.matrix[,(n.flank+1)] <-threshold
-  idx <- (this.pvalue <= t.matrix) == T
-
+  idx <- (this.pvalue <= threshold) == T
+  #t.matrix=matrix(0.05, nrow=nrow(this.pvalue),ncol=ncol(this.pvalue))
+  #t.matrix[,(n.flank+1)] <-threshold
+  #idx <- (this.pvalue <= t.matrix) == T
   idx.prod <- rowProds(idx)
   
   # all flanking positions have to be significant as well:
   if (sum(idx.prod) > 0) {
+
+    # this pairwise combination:
     this.comb <- as.matrix(comb[,(idx.prod == 1)])
     
     # check direction and change if neccessary:
+    this.sign <- do.call(rbind, lapply(p, function(x) x$sign[pos]))
     idx.invert <- this.sign[(idx.prod == 1),(n.flank+1)] < 0
     if (sum(idx.invert) > 0) {
       this.comb[,idx.invert] <- this.comb[c(2,1),idx.invert]
@@ -622,6 +623,8 @@ get_peakPattern <- function(p, threshold, IDs, cores){
 			)
   
   # remove zeros:
+  list <- list[lapply(list,length)>0]
+
   null.idx <- which(sapply(list, is.null))
   if (length(null.idx) > 0) list <- list[-null.idx]
   
@@ -743,7 +746,7 @@ get_sorted_peaks <- function(peaks, IDs){
 	mcols(peaks)$super.pattern = NA
 	mcols(peaks)$cluster = NA
 
-	# get super pattern:
+	# get super pattern and transform to matrix:
 	pattern <- mcols(peaks)$significance.pattern
 	pattern.mat <- do.call(rbind, lapply(pattern, function(x) as.numeric(unlist(strsplit(x, "")))))
 
@@ -764,48 +767,47 @@ get_sorted_peaks <- function(peaks, IDs){
 	pattern.r <- apply(pattern.mat.r, 1, function(x) paste(x, collapse=""))
 
 	# generate super pattern
-	super.pattern <- unlist(lapply(pattern.r, function(x) get_super.pattern(x, (length(IDs)-1))))
-	super.pattern.mat <- do.call(rbind, lapply(super.pattern, function(x) as.numeric(unlist(strsplit(x, "")))))
+	super.pattern.r <- unlist(lapply(pattern.r, function(x) get_super.pattern(x, (length(IDs)-1))))
+	super.pattern.r.mat <- do.call(rbind, lapply(super.pattern.r, function(x) as.numeric(unlist(strsplit(x, "")))))
 
-	super.cluster <- c(which(rowSums(super.pattern.mat)==1), which(super.pattern == paste0(paste0(rep(1, (length(IDs)-1)), collapse=""), 0)))
-	super.cluster.table <- sort(table(super.pattern[super.cluster]), decreasing=T)
+	super.cluster <- c(which(rowSums(super.pattern.r.mat)==1), which(super.pattern.r == paste0(paste0(rep(1, (length(IDs)-1)), collapse=""), 0)))
+	super.cluster.table <- sort(table(super.pattern.r[super.cluster]), decreasing=T)
 
 	# assign super pattern:	
-	for(this in unique(super.pattern[super.cluster])){
-		mcols(peaks)$super.pattern[which(super.pattern==this)] = this
-		mcols(peaks)$cluster[which(super.pattern==this)] = which(names(super.cluster.table) == this)
+	for(this in unique(super.pattern.r[super.cluster])){
+		mcols(peaks)$super.pattern[which(super.pattern.r==this)] = this
+		mcols(peaks)$cluster[which(super.pattern.r==this)] = which(names(super.cluster.table) == this)
 	}
 
 	# assign all the other cluster names (more complex clusters, where more than one condition is significantly different):
-	for(this in unique(pattern.r[-super.cluster])){
+	for(this in unique(pattern[-c(idx.ubi,super.cluster)])){
 		if(grepl("1",this)){
-			mcols(peaks)$cluster[which(pattern==this)] = paste0("r",which(names(sort(table(pattern.r[-super.cluster]), decreasing=T)) == this))
+			mcols(peaks)$cluster[which(pattern==this)] = paste0("r",which(names(sort(table(pattern[-c(idx.ubi,super.cluster)]), decreasing=T)) == this))
+			mcols(peaks)$super.pattern[which(pattern==this)] = rep(get_super.pattern(this,  (length(IDs)-1)), length(which(pattern==this)))
 		}
 	}
 
 	# first: order by super pattern:
-	#super.pattern <- super.pattern[which(rowSums(super.pattern.mat)>0)]
-	#super.pattern.mat <- super.pattern.mat[which(rowSums(super.pattern.mat)>0),]
+	super.pattern <- mcols(peaks)$super.pattern
+	super.pattern.mat <- do.call(rbind, lapply(super.pattern, function(x) as.numeric(unlist(strsplit(x, "")))))
 
 	super.pattern.mat.order=apply(super.pattern.mat , 1, function(x) which(x==1)[1])
 	peaks=peaks[order(super.pattern.mat.order)]
-	super.pattern=super.pattern[order(super.pattern.mat.order)]
+	super.pattern_ordered=super.pattern[order(super.pattern.mat.order)]
 
 	# second: sort within each super pattern:
 	order=c()
-	for(this.pattern in unique(super.pattern)){
-		this=which(super.pattern == this.pattern)
+	for(this.pattern in unique(super.pattern_ordered)){
+		this=which(super.pattern_ordered == this.pattern)
 		this.mat=do.call(rbind, lapply(pattern.r[this], function(x) as.numeric(unlist(strsplit(x, "")))))
 		order=c(order, this[order(rowSums(this.mat))])
 	}
-
 	peaks<-peaks[order]
 	
 	# remove NA:
-	peaks <- peaks[-which(is.na(mcols(peaks)$cluster))]
-
-	#ubiquitous.peaks <- peaks[which(mcols(peaks)$cluster=="U")]
-	#peaks <- c(peaks[-which(mcols(peaks)$cluster=="U")], ubiquitous.peaks)
+	if(length(which(is.na(mcols(peaks)$cluster))) > 0){
+		peaks <- peaks[-which(is.na(mcols(peaks)$cluster))]
+	}
 
 	return(peaks)
 }
@@ -895,11 +897,11 @@ plot_heatmap <- function(mat, IDs, color_low, color_mid, color_high, x_axis_labe
 	cluster.unique <- unique(mat$GRID.X[-grep("r",mat$GRID.X)])
   }
 
-  my_colors <- data.frame( col=sample(rainbow(length(cluster.unique), s=0.5),length(cluster.unique)),
+  my_colors <- data.frame( col=sample(rainbow(length(cluster.unique), s=0.8),length(cluster.unique)),
 			   cluster=cluster.unique,
 			   stringsAsFactors=F)
 
-  colors<- rep("white", length(which(mat$GRID.Y == "cluster")))
+  colors<- rep("NA", length(which(mat$GRID.Y == "cluster")))
   label <- rep("", length(which(mat$GRID.Y == "cluster")))
 
   for(this in my_colors$cluster){
@@ -938,7 +940,7 @@ plot_heatmap <- function(mat, IDs, color_low, color_mid, color_high, x_axis_labe
                   scale_x_discrete(	position = "top",
                                     	name = x_axis_label
                   ) +
-		  geom_tile(aes(height = 1, width=0.3), fill=colors, size = 1,subset(mat,GRID.Y %in% c("cluster")),show.legend = F)+
+		  geom_tile(aes(height = 1, width=0.5), fill=colors, size = 0,subset(mat,GRID.Y %in% c("cluster")),show.legend = F)+
 		  geom_text(aes(label=label),subset(mat,GRID.Y %in% c("cluster")))
 
     ggsave(filename = paste0(out.file,".pdf"), plot = plot, width = width, height = height, device = "pdf", units = 'in')

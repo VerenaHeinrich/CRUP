@@ -208,7 +208,7 @@ for(this in unique(mcols(peaks)$cluster)){
 done()
 
 # output 4: a visual summary of all dynamically changing enhancers:
-IDs=unlist(IDs)[-length(IDs)]
+IDs=IDs[-length(IDs)]
 
 LABEL_COND <- c(gsub("_.*","", unlist(IDs)), "cluster")
 LABEL_REP <- c(gsub(".*_", "", unlist(IDs)), "")
