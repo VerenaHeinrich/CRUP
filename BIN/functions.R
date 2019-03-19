@@ -762,9 +762,10 @@ get_sorted_peaks <- function(peaks, IDs){
 	mcols(peaks)$cluster[idx.ubi] = "U"
 	mcols(peaks)$super.pattern[idx.ubi] = rep(paste(rep(1,length(pattern.idx.ubi)),collapse=""), length(idx.ubi))
 
-	# now assign the differential cluster:
+	# define pattern without the ubiquitous regions and define zero lines:
 	pattern.mat.r <- pattern.mat[,-pattern.idx.ubi]
 	pattern.r <- apply(pattern.mat.r, 1, function(x) paste(x, collapse=""))
+	idx.zero <- which(apply(pattern.mat.r, 1, function(x) sum(x) == 0)==T)
 
 	# generate super pattern
 	super.pattern.r <- unlist(lapply(pattern.r, function(x) get_super.pattern(x, (length(IDs)-1))))
@@ -780,9 +781,9 @@ get_sorted_peaks <- function(peaks, IDs){
 	}
 
 	# assign all the other cluster names (more complex clusters, where more than one condition is significantly different):
-	for(this in unique(pattern[-c(idx.ubi,super.cluster)])){
+	for(this in unique(pattern[-c(idx.zero,idx.ubi,super.cluster)])){
 		if(grepl("1",this)){
-			mcols(peaks)$cluster[which(pattern==this)] = paste0("r",which(names(sort(table(pattern[-c(idx.ubi,super.cluster)]), decreasing=T)) == this))
+			mcols(peaks)$cluster[which(pattern==this)] = paste0("r",which(names(sort(table(pattern[-c(idx.zero,idx.ubi,super.cluster)]), decreasing=T)) == this))
 			mcols(peaks)$super.pattern[which(pattern==this)] = rep(get_super.pattern(this,  (length(IDs)-1)), length(which(pattern==this)))
 		}
 	}
