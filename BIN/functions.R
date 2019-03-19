@@ -526,7 +526,7 @@ get_pairwisePvalues <- function(probs, IDs, w_0, cores){
   comb <- combn(seq(length(IDs)),2)
 
   # generate null distribution:
-  probs.shuffled <- sample(mcols(probs)) #apply(mcols(probs), 2,  sample)
+  probs.shuffled <- apply(mcols(probs), 2,  sample)#sample(mcols(probs)) #apply(mcols(probs), 2,  sample)
  
   # get empirical p.values:
   p.values <- mclapply( as.list(seq(dim(comb)[2])), mc.cores = cores,
