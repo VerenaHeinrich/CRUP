@@ -524,7 +524,6 @@ get_pairwisePvalues <- function(probs, IDs, w_0, cores){
   comb <- combn(seq(length(IDs)),2)
 
   # generate null distribution:
-  #probs.shuffled <- apply(mcols(probs), 2, sample)
   probs.shuffled <- apply(mcols(probs), 2,  sample)
  
   # get empirical p.values:
@@ -556,10 +555,10 @@ get_positionPattern <- function(p, i, threshold, pattern_empty, comb){
   # all pairwise p-values at position i and +/- 2 positions:
   this.pvalue <- do.call(rbind, lapply(p, function(x) x$p.values[pos]))
 
-  idx <- (this.pvalue <= threshold) == T
-  #t.matrix=matrix(0.05, nrow=nrow(this.pvalue),ncol=ncol(this.pvalue))
-  #t.matrix[,(n.flank+1)] <-threshold
-  #idx <- (this.pvalue <= t.matrix) == T
+  #idx <- (this.pvalue <= threshold) == T
+  t.matrix=matrix(0.05, nrow=nrow(this.pvalue),ncol=ncol(this.pvalue))
+  t.matrix[,(n.flank+1)] <-threshold
+  idx <- (this.pvalue <= t.matrix) == T
   idx.prod <- rowProds(idx)
   
   # all flanking positions have to be significant as well:
