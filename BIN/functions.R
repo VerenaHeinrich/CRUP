@@ -426,7 +426,7 @@ get_tStatistic <- function(a, b, w_0){
   
   #generate complete cases:
   res[is.infinite(res)]  <-  NA
-  res[which(res<0)]  <-  NA
+  #res[which(res<0)]  <-  NA
 
   return(res)
 }  
@@ -507,6 +507,7 @@ get_empPvalues <- function(i, comb, w_0, IDs, probs, probs.shuffled){
   	ECDF <- ecdf(null_statistic)
   	p.values <- 1-ECDF(statistic)
 
+	p.values[which(statistic<0)] = 1
 	p.values[is.na(sign)] = 1
 	p.values[is.na(p.values)] = 1
 
