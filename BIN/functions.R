@@ -426,6 +426,7 @@ get_tStatistic <- function(a, b, w_0){
   
   #generate complete cases:
   res[is.infinite(res)]  <-  NA
+  res[which(res<0)]  <-  0
 
   return(res)
 }  
