@@ -187,7 +187,7 @@ cat(paste0(skip(), "Output 1 - save condition-specific enhancer regions to:  ", 
 write.table(data.frame(peaks)[, c(	 GR_header,
 					 "best.p.value",
  					 "cluster",
-					 unlist(IDs)[-length(IDs)])],
+					 unlist(IDs[-length(IDs)]))],
 				 file = out.txt, quote = F, row.names = F, sep = "\t")
 done()
 

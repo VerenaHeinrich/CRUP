@@ -788,22 +788,9 @@ get_sorted_peaks <- function(peaks, IDs){
 	}
 
 	# first: order by super pattern:
-	super.pattern <- mcols(peaks)$super.pattern
-	super.pattern.mat <- do.call(rbind, lapply(super.pattern, function(x) as.numeric(unlist(strsplit(x, "")))))
+	order <- with(data.frame(V0=mcols(peaks)$cluster, V1=mcols(peaks)$super.pattern), order(V1, V0)) 
+	peaks=peaks[order]
 
-	super.pattern.mat.order=apply(super.pattern.mat , 1, function(x) which(x==1)[1])
-	peaks=peaks[order(super.pattern.mat.order)]
-	super.pattern_ordered=super.pattern[order(super.pattern.mat.order)]
-
-	# second: sort within each super pattern:
-	order=c()
-	for(this.pattern in unique(super.pattern_ordered)){
-		this=which(super.pattern_ordered == this.pattern)
-		this.mat=do.call(rbind, lapply(pattern.r[this], function(x) as.numeric(unlist(strsplit(x, "")))))
-		order=c(order, this[order(rowSums(this.mat))])
-	}
-	peaks<-peaks[order]
-	
 	# remove NA:
 	if(length(which(is.na(mcols(peaks)$cluster))) > 0){
 		peaks <- peaks[-which(is.na(mcols(peaks)$cluster))]
