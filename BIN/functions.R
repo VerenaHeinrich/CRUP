@@ -426,7 +426,7 @@ get_tStatistic <- function(a, b, w_0){
   
   #generate complete cases:
   res[is.infinite(res)]  <-  NA
-  res[which(res<0)]  <-  0
+  res[which(res<0)]  <-  NA
 
   return(res)
 }  
@@ -525,7 +525,7 @@ get_pairwisePvalues <- function(probs, IDs, w_0, cores){
   comb <- combn(seq(length(IDs)),2)
 
   # generate null distribution:
-  probs.shuffled <- apply(mcols(probs), 2,  sample)
+  probs.shuffled <- sample(mcols(probs)) #apply(mcols(probs), 2,  sample)
  
   # get empirical p.values:
   p.values <- mclapply( as.list(seq(dim(comb)[2])), mc.cores = cores,
@@ -885,7 +885,7 @@ plot_heatmap <- function(mat, IDs, color_low, color_mid, color_high, x_axis_labe
 	cluster.unique <- unique(mat$GRID.X[-grep("r",mat$GRID.X)])
   }
 
-  my_colors <- data.frame( col=sample(rainbow(length(cluster.unique), s=0.8),length(cluster.unique)),
+  my_colors <- data.frame( col=sample(rainbow(length(cluster.unique), s=0.5),length(cluster.unique)),
 			   cluster=cluster.unique,
 			   stringsAsFactors=F)
 
