@@ -442,9 +442,10 @@ get_empPvalues <- function(i, comb, w_0, IDs, probs, probs.shuffled){
 	IDs.1 = IDs[[comb[,i][1]]]
   	IDs.2 = IDs[[comb[,i][2]]]
 
-	# statistic for shuffled distribution (null distribution):
-	null_statistic <- c()
 	sign <- c()
+	null_statistic <-c()
+	statistic <- c()
+
 	if(IDs.1[1] != 'background' & IDs.2[1] != 'background'){
 
 		# true statistic:
@@ -456,7 +457,7 @@ get_empPvalues <- function(i, comb, w_0, IDs, probs, probs.shuffled){
 		# random statistic:
 		null_statistic <- get_tStatistic( probs.shuffled[,IDs.1], 
 						  probs.shuffled[,IDs.2], 
-			                    	  w_0
+			                    	  w_0=0
 		)
 
 		# get sign (+1 or -1 or NA):
@@ -475,7 +476,7 @@ get_empPvalues <- function(i, comb, w_0, IDs, probs, probs.shuffled){
 			# random statistic:
 			null_statistic <- get_tStatistic( rep(0,nrow(probs)), 
 							  probs.shuffled[,IDs.2], 
-				                    	  w_0=0.5
+				                    	  w_0=0
 			)
 		
 			# get sign (+1 or -1 or NA):
@@ -493,7 +494,7 @@ get_empPvalues <- function(i, comb, w_0, IDs, probs, probs.shuffled){
 
 			null_statistic <- get_tStatistic( probs.shuffled[,IDs.1], 
 							  rep(0,nrow(probs)), 
-				                    	  w_0=0.5
+				                    	  w_0=0
 			)
 
 			# get sign (+1 or -1 or NA):
@@ -507,7 +508,7 @@ get_empPvalues <- function(i, comb, w_0, IDs, probs, probs.shuffled){
   	ECDF <- ecdf(null_statistic)
   	p.values <- 1-ECDF(statistic)
 
-	p.values[which(statistic<0)] = 1
+	#p.values[which(statistic<0)] = 1
 	p.values[is.na(sign)] = 1
 	p.values[is.na(p.values)] = 1
 
@@ -526,7 +527,7 @@ get_pairwisePvalues <- function(probs, IDs, w_0, cores){
   comb <- combn(seq(length(IDs)),2)
 
   # generate null distribution:
-  probs.shuffled <- apply(mcols(probs), 2,  sample)#sample(mcols(probs)) #apply(mcols(probs), 2,  sample)
+  probs.shuffled <- sample(mcols(probs)) #apply(mcols(probs), 2,  sample)
  
   # get empirical p.values:
   p.values <- mclapply( as.list(seq(dim(comb)[2])), mc.cores = cores,
@@ -610,7 +611,7 @@ get_peakPattern <- function(p, threshold, IDs, cores){
 
   # stop script if there is no significant difference:
   if (length(idx.significant) == 0) {
-    cat(paste0("No significant positions found for threshold ", threshold, ".\n"))
+    cat(paste0(skip(), "no significant positions found for threshold ", threshold, ".\n"))
     q();
   }
   
