@@ -27,7 +27,7 @@ if (!exists('opt')) {
 ##################################################################
 
 # colors for heatmap spectrum:
-color_low  <- "white"
+color_low  <- "#E3F1FB"
 color_mid  <- "#84B3D7"
 color_high <- "#003964"
 
