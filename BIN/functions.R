@@ -37,7 +37,7 @@ spectrum <- matrix(c( 'norm',           'N', 0, "logical",       "computes norma
                       'probabilities',  'p', 1, "character",     "probabilities in rds format. list: delimiter samples: ':', delimiter conditions: ','",
                       'names',          'n', 1, "character",     "aternative labels for conditions (DEFAULT: cond1,cond2, ..)",
                       'w_0',            'w', 1, "double",        "minimum difference between group means [0,1]. (DEFAULT: 0.5)",
-                      'threshold',      't', 1, "double",        "threshold for p-values in [0,1]. (DEFAULT: 0.01)",
+                      'threshold',      't', 1, "double",        "threshold for p-values in [0,1]. (DEFAULT: 0.05)",
                       'threshold_c',    'C', 1, "double",        "threshold for correlation in [0.5,1]. (DEFAULT: 0.9)",
                       'len',            'l', 1, "integer",       "length of flanking region for summarizing. (DEFAULT: 1000)",
                       'regions',        'r', 1, "character",     "text file with condition-specific regions in txt format",

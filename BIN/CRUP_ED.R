@@ -84,7 +84,7 @@ opt$outdir <- check_outdir(opt$outdir, unlist(files)[1])
 if (is.null(opt$cores))       opt$cores <- 1
 if (is.null(opt$len))         opt$len <- 1000
 if (is.null(opt$threshold)) {
-  opt$threshold <- 0.01 
+  opt$threshold <- 0.05 
 } else if (!is.null(opt$threshold) & (opt$threshold < 0 | opt$threshold > 1) ) {
   cat(paste0(opt$threshold, " is not in range [0,1].\n"))
   q();
