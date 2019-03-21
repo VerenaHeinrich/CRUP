@@ -802,59 +802,6 @@ get_sorted_peaks <- function(peaks, IDs){
 	return(peaks)
 }
 
-get_sorted_peaks_old <- function(peaks, IDs){
-
-	# get super pattern:
-	pattern <- mcols(peaks)$significance.pattern
-	super.pattern <- unlist(lapply(pattern, function(x) get_super.pattern(x, length(IDs))))
-	super.pattern.mat <- do.call(rbind, lapply(super.pattern, function(x) as.numeric(unlist(strsplit(x, "")))))
-
-	# define the 'ubiquitous super pattern':
-	super.pattern.ubi <- paste0(paste0(rep(1, (length(IDs)-1)), collapse=""), 0)
-
-	super.cluster <- c(which(rowSums(super.pattern.mat)==1), which(super.pattern == paste0(paste0(rep(1, (length(IDs)-1)), collapse=""), 0)))
-	super.cluster.table <- sort(table(super.pattern[super.cluster]), decreasing=T)
-	super.cluster.table <- super.cluster.table[-which(names(super.cluster.table) == super.pattern.ubi)]
-
-	# add "super"-clusters to peaks:
-	mcols(peaks)$super.pattern = NA
-	mcols(peaks)$cluster = NA
-	for(this in unique(super.pattern[super.cluster])){
-
-		# assign super pattern:
-		mcols(peaks)$super.pattern[which(super.pattern==this)] = this
-
-		# ubiquitous regions (enhancers that are active in every condition):
-		if(this == super.pattern.ubi){
-			mcols(peaks)$cluster[which(super.pattern==this)] = "U"
-		}else{
-
-			# assign cluster name for super pattern (according to size)
-			mcols(peaks)$cluster[which(super.pattern==this)] = which(names(super.cluster.table) == this)
-		}
-	}
-
-	# assign all the other cluster names (more complex clusters, where more than one condition is significantly different):
-	for(this in unique(pattern[-super.cluster])){
-		mcols(peaks)$cluster[which(pattern==this)] = paste0("r",which(names(sort(table(pattern[-super.cluster]), decreasing=T)) == this))
-	}
-
-	# first: order by super pattern:
-	super.pattern.mat.order=apply(super.pattern.mat , 1, function(x) which(x==1)[1])
-	peaks=peaks[order(super.pattern.mat.order)]
-	super.pattern=super.pattern[order(super.pattern.mat.order)]
-
-	# second: sort within each super pattern:
-	order=c()
-	for(this.pattern in unique(super.pattern)){
-		this=which(super.pattern == this.pattern)
-		this.mat=do.call(rbind, lapply(mcols(peaks)$significance.pattern[this], function(x) as.numeric(unlist(strsplit(x, "")))))
-		order=c(order, this[order(rowSums(this.mat))])
-	}
-
-	return(peaks[order])
-}
-
 ##################################################################
 # function: adjust y positioning for heatmap (y axis):
 ##################################################################
