@@ -887,7 +887,7 @@ plot_heatmap <- function(mat, IDs, color_low, color_mid, color_high, x_axis_labe
 	cluster.unique <- unique(mat$GRID.X[-grep("r",mat$GRID.X)])
   }
 
-  my_colors <- data.frame( col=sample(rainbow(length(cluster.unique), s=0.5),length(cluster.unique)),
+  my_colors <- data.frame( col=sample(rainbow(length(cluster.unique), s=0.3),length(cluster.unique)),
 			   cluster=cluster.unique,
 			   stringsAsFactors=F)
 
@@ -930,7 +930,7 @@ plot_heatmap <- function(mat, IDs, color_low, color_mid, color_high, x_axis_labe
                   scale_x_discrete(	position = "top",
                                     	name = x_axis_label
                   ) +
-		  geom_tile(aes(height = 1, width=0.5), fill=colors, size = 0,subset(mat,GRID.Y %in% c("cluster")),show.legend = F)+
+		  geom_tile(aes(height = 1, width=1), fill=colors, size = 0,subset(mat,GRID.Y %in% c("cluster")),show.legend = F)+
 		  geom_text(aes(label=label),subset(mat,GRID.Y %in% c("cluster")))
 
     ggsave(filename = paste0(out.file,".pdf"), plot = plot, width = width, height = height, device = "pdf", units = 'in')
