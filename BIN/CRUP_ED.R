@@ -170,6 +170,9 @@ if (is.null(pattern)) {
 
 cat(paste0(skip(), "combine peaks by significance pattern"))
 peaks <- get_combinedDiffPeaks(probs, p, pattern, IDs, len)
+rm(probs)
+rm(p)
+rm(pattern)
 done()
 
 cat(paste0(skip(), "sort regions by significance peak pattern"))

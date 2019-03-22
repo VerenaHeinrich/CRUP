@@ -99,7 +99,7 @@ if (is.null(opt$threshold_c)) {
 }
 if (is.null(opt$cores)) opt$cores <- 1
 if (is.null(opt$TAD) & opt$genome == "mm10") {
-  opt$TAD   <- normalizePath("DATA/mESC_mapq30_KR_all_TADs.bed")
+  opt$TAD   <- normalizePath(paste0(path,"/DATA/mESC_mapq30_KR_all_TADs.bed"))
 }
 if (is.null(opt$TAD))  {
   cat(paste0("You have to provide your own file with TAD domains (fitting to the genome choice).\n"))

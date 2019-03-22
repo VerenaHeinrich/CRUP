@@ -647,11 +647,15 @@ combine_peaks <- function(x, flank){
   
   if (length(x) > 1) {
     
-    x.flank = x
-    start(x.flank) = start(x.flank) - flank 
-    end(x.flank) = end(x.flank) + flank
+    x.flank = GRanges(	seqnames=seqnames(x),
+			ranges=IRanges( start=(start(x) - flank),
+					end=(end(x) + flank)
+					)
+			)
     
     red <- reduce(x.flank,with.revmap = T)
+    rm(x.flank)
+
     best.idx <- unlist(lapply(mcols(red)$revmap, function(y) y[which.min(mcols(x)$score[y])]))
     
     red$score <- x$score[best.idx]
@@ -683,34 +687,34 @@ get_combinedDiffPeaks <- function(probs, p, pattern, IDs, len){
   w <- width(gr[1])
   start(gr) <- start(gr) - ( n.flank*w )
   end(gr) <- end(gr) + ( n.flank*w )
-
-  # get pvalue from all pairwise comparisons
-  score <- do.call(cbind, lapply(p, function(x) x$p.values[idx]))
   
-  # add minimim pvalue (score), bin index and pattern to each bin:
-  mcols(gr)$score <- rowMins(abs(score))
+  # add minimim pvalue, bin index and pattern to each bin:
+  mcols(gr)$score <- rowMins(abs(do.call(cbind, lapply(p, function(x) x$p.values[idx]))))
   mcols(gr)$index <- idx
   mcols(gr)$pattern <- apply(pattern, 1, function(x) paste0(x, collapse = ""))
   
   # split by p.value pattern
   peaks.split = split(gr, mcols(gr)$pattern)
   
+  # remove gr:
+  rm(gr)
+
   # combine regions (with a flexible flanking area of length 'len')
+  #for(i in 1:length(peaks.split)){
+  #	if(!exists('peaks')){
+  #		peaks <- combine_peaks(peaks.split[[i]], flank = len)
+  #	}else{
+  #		peaks <- c(peaks, combine_peaks(peaks.split[[i]], flank = len))
+  #	}
+  # }
   peaks = mclapply( peaks.split, 
                     function(x) combine_peaks(x, flank = len), 
                     mc.cores = cores
   )
+  rm(peaks.split)
+
   peaks <- c(do.call("c", unname(peaks)))
   peaks <- combine_peaks(peaks, flank = 0)
-  
-  # get mean of original enhancer probabilities in combined intervals:
-  #overlaps <- findOverlaps(probs, peaks)
-  #sites <- probs[queryHits(overlaps)]
-  #
-  # for(this.ID in unlist(IDs)){
-  #	this.mean <- aggregate(mcols(sites)[,this.ID], list(subjectHits(overlaps)), mean)
-  #	mcols(peaks)[, this.ID] <- this.mean$x
-  # }
 
   colnames(elementMetadata(peaks))[1:3] <- c(   "best.p.value",
 						 "index", 
@@ -997,9 +1001,9 @@ get_correlation <- function(i, threshold, regions.gr, expr.gr, TAD.gr, IDs){
       if (!is.na(cor[c]) && cor[c] >= threshold) {
         interactions <- rbind(	interactions, 
                                data.frame(	data.frame(this.region)[,c(GR_header_short, "cluster", IDs)],
-                                           TAD_COORDINATES = paste0(this.TAD),
-                                           CORRELATED_GENE = paste(mcols(this.genes)[c,"gene_id"]),
-                                           CORRELATION = cor[c] ))
+                                           	TAD_COORDINATES = paste0(this.TAD),
+                                           	CORRELATED_GENE = paste(mcols(this.genes)[c,"gene_id"]),
+                                           	CORRELATION = cor[c] ))
       }
     }
     if (length(interactions) > 0) return(makeGRangesFromDataFrame(interactions, keep.extra.columns = T))
