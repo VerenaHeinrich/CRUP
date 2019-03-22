@@ -707,10 +707,15 @@ get_combinedDiffPeaks <- function(probs, p, pattern, IDs, len){
   #		peaks <- c(peaks, combine_peaks(peaks.split[[i]], flank = len))
   #	}
   # }
-  peaks = mclapply( peaks.split, 
+
+  peaks = mclapply( peaks.split[which(lapply(peaks.split, length)>1)], 
                     function(x) combine_peaks(x, flank = len), 
                     mc.cores = cores
   )
+  peaks=c(peaks, mclapply( peaks.split[which(lapply(peaks.split, length)==1)], 
+                    function(x) combine_peaks(x, flank = len), 
+                    mc.cores = cores
+  ))
   rm(peaks.split)
 
   peaks <- c(do.call("c", unname(peaks)))
