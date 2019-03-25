@@ -558,10 +558,10 @@ get_positionPattern <- function(p, i, threshold, pattern_empty, comb){
   # all pairwise p-values at position i and +/- 2 positions:
   this.pvalue <- do.call(rbind, lapply(p, function(x) x$p.values[pos]))
 
-  #idx <- (this.pvalue <= threshold) == T
-  t.matrix=matrix(0.05, nrow=nrow(this.pvalue),ncol=ncol(this.pvalue))
-  t.matrix[,(n.flank+1)] <-threshold
-  idx <- (this.pvalue <= t.matrix) == T
+  idx <- (this.pvalue <= threshold) == T
+  #t.matrix=matrix(0.05, nrow=nrow(this.pvalue),ncol=ncol(this.pvalue))
+  #t.matrix[,(n.flank+1)] <-threshold
+  #idx <- (this.pvalue <= t.matrix) == T
   idx.prod <- rowProds(idx)
   
   # all flanking positions have to be significant as well:
@@ -709,15 +709,15 @@ get_combinedDiffPeaks <- function(probs, p, pattern, IDs, len){
   # }
 
   peaks <- c()
-  for(s in seq(1, length(peaks.split), by=10)){
-	if((s+10-1) > length(peaks.split)){
+  for(s in seq(1, length(peaks.split), by=5)){
+	if((s+5) > length(peaks.split)){
 		this.peaks <- mclapply(  peaks.split[s:length(peaks.split)], 
         	            	function(x) combine_peaks(x, flank = len), 
         	            	mc.cores = cores
   			)
 		peaks=c(peaks,this.peaks)
 	}else{
-		this.peaks <- mclapply(  peaks.split[s:(s+10-1)], 
+		this.peaks <- mclapply(  peaks.split[s:(s+5-1)], 
         	            	function(x) combine_peaks(x, flank = len), 
         	            	mc.cores = cores
   			)
