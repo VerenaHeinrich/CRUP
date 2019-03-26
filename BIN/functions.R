@@ -708,22 +708,27 @@ get_combinedDiffPeaks <- function(probs, p, pattern, IDs, len){
   #	}
   # }
 
-  peaks <- c()
-  for(s in seq(1, length(peaks.split), by=5)){
-	if((s+5) > length(peaks.split)){
-		this.peaks <- mclapply(  peaks.split[s:length(peaks.split)], 
-        	            	function(x) combine_peaks(x, flank = len), 
-        	            	mc.cores = cores
+  peaks <- mclapply(	peaks.split, 
+			function(x) combine_peaks(x, flank = len), 
+			mc.cores = cores
   			)
-		peaks=c(peaks,this.peaks)
-	}else{
-		this.peaks <- mclapply(  peaks.split[s:(s+5-1)], 
-        	            	function(x) combine_peaks(x, flank = len), 
-        	            	mc.cores = cores
-  			)
-		peaks=c(peaks,this.peaks)
-	}
-  }
+
+  #peaks <- c()
+  #for(s in seq(1, length(peaks.split), by=5)){
+#	if((s+5) > length(peaks.split)){
+#		this.peaks <- mclapply(  peaks.split[s:length(peaks.split)], 
+ #       	            	function(x) combine_peaks(x, flank = len), 
+  #      	            	mc.cores = cores
+  #			)
+#		peaks=c(peaks,this.peaks)
+#	}else{
+#		this.peaks <- mclapply(  peaks.split[s:(s+5-1)], 
+ #       	            	function(x) combine_peaks(x, flank = len), 
+  #      	            	mc.cores = cores
+  #			)
+#		peaks=c(peaks,this.peaks)
+#	}
+ # }
   
   rm(peaks.split)
 
