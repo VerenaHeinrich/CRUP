@@ -47,7 +47,7 @@ sample_prefix     <- "Rep"
 
 parameter <- c("probabilities")
 parameter.bool <- sapply(parameter, function(x) !is.null(opt[[x]]))
-parameter.extra <- c("outdir", "cores", "w_0", "len", "threshold", "names")
+parameter.extra <- c("outdir", "cores", "w_0", "len", "n.flank", "threshold", "names")
 
 if (!is.null(opt$help)) stop_script(c("dynamics", parameter, parameter.extra))
 if (sum(parameter.bool) == 0) stop_script(c("dynamics", parameter, parameter.extra))
@@ -83,6 +83,7 @@ opt$outdir <- check_outdir(opt$outdir, unlist(files)[1])
 # set default values
 if (is.null(opt$cores))       opt$cores <- 1
 if (is.null(opt$len))         opt$len <- 1000
+if (is.null(opt$n.flank))     opt$n.flank <- 2
 if (is.null(opt$threshold)) {
   opt$threshold <- 0.05 
 } else if (!is.null(opt$threshold) & (opt$threshold < 0 | opt$threshold > 1) ) {
@@ -108,6 +109,7 @@ cores     <- opt$cores
 w_0       <- opt$w_0
 len       <- opt$len
 threshold <- opt$threshold
+n.flank	  <- opt$n.flank
 
 cat(skip(), "files: \n", 
             paste0("\t\t",unlist(lapply(1:length(files), 
@@ -117,6 +119,7 @@ cat(skip(), "len: ",len, "\n")
 cat(skip(), "threshold: ",threshold, "\n")
 cat(skip(), "cores: ",cores, "\n")
 cat(skip(), "outdir: ",outdir, "\n")
+cat(skip(), "n.flank: ",n.flank, "\n")
 
 endPart()
 
@@ -160,7 +163,7 @@ endPart()
 
 startPart("Get condition-specific enhancer peaks")
 cat(paste0(skip(), "build significance peak pattern"))
-pattern <- get_peakPattern(p, threshold, IDs, cores)
+pattern <- get_peakPattern(p, threshold, IDs, cores, n.flank)
 done()
 
 if (is.null(pattern)) {
@@ -169,7 +172,7 @@ if (is.null(pattern)) {
 }
 
 cat(paste0(skip(), "combine peaks by significance pattern"))
-peaks <- get_combinedDiffPeaks(probs, p, pattern, IDs, len)
+peaks <- get_combinedDiffPeaks(probs, p, pattern, IDs, len, n.flank)
 rm(probs)
 rm(p)
 rm(pattern)
@@ -212,6 +215,8 @@ done()
 
 # output 4: a visual summary of all dynamically changing enhancers:
 IDs=IDs[-length(IDs)]
+#mat<-mat[which(mat$GRID.X !="U"),]
+peaks = peaks[which(mcols(peaks)$cluster != 'U')]
 
 LABEL_COND <- c(gsub("_.*","", unlist(IDs)), "cluster")
 LABEL_REP <- c(gsub(".*_", "", unlist(IDs)), "")
@@ -224,8 +229,6 @@ mat <- data.frame(  X = unlist(lapply(LABEL_REP, function(x) rep(x, length(peaks
                     GRID.X = factor(rep(CLUSTER, (length(unlist(IDs))+1)), levels = unique(CLUSTER)),
                     GRID.Y = factor(unlist(lapply(LABEL_COND, function(x) rep(x,  length(peaks)))), levels=unique(LABEL_COND))
 )
-
-mat<-mat[which(mat$GRID.X !="U"),]
 
 out <- paste0(outdir, paste0("dynamicEnh__w0_",w_0,"__threshold_", threshold))
 cat(paste0(skip(), "Output 4 - results are visualized as a heatmap (pdf and png):  ", out,".pdf/png"))

@@ -40,6 +40,7 @@ spectrum <- matrix(c( 'norm',           'N', 0, "logical",       "computes norma
                       'threshold',      't', 1, "double",        "threshold for p-values in [0,1]. (DEFAULT: 0.05)",
                       'threshold_c',    'C', 1, "double",        "threshold for correlation in [0.5,1]. (DEFAULT: 0.9)",
                       'len',            'l', 1, "integer",       "length of flanking region for summarizing. (DEFAULT: 1000)",
+                      'n.flank',        'F', 1, "integer",       "number of (+/-) flanking region for summarizing differential peaks. (DEFAULT: 2)",
                       'regions',        'r', 1, "character",     "text file with condition-specific regions in txt format",
                       'RNA',            'E', 1, "character",     "RNA-seq experiments in bam format. list: delimiter samples: ':', delimiter conditions: ','",
                       'expression',     'e', 1, "character",     "gene expression counts for all samples and conditions",
@@ -527,7 +528,7 @@ get_pairwisePvalues <- function(probs, IDs, w_0, cores){
   comb <- combn(seq(length(IDs)),2)
 
   # generate null distribution:
-  probs.shuffled <- sample(mcols(probs)) #apply(mcols(probs), 2,  sample)
+  probs.shuffled <- sample(mcols(probs))
  
   # get empirical p.values:
   p.values <- mclapply( as.list(seq(dim(comb)[2])), mc.cores = cores,
@@ -549,10 +550,9 @@ get_pairwisePvalues <- function(probs, IDs, w_0, cores){
 # output: vector \in [0,1]
 ##################################################################
 
-get_positionPattern <- function(p, i, threshold, pattern_empty, comb){
+get_positionPattern <- function(p, i, threshold, pattern_empty, comb, n.flank){
   
   # define region with flanking positions
-  n.flank=2
   pos <- c(rev(i - 1:n.flank), i, (i + 1:n.flank))
   
   # all pairwise p-values at position i and +/- 2 positions:
@@ -592,7 +592,7 @@ get_positionPattern <- function(p, i, threshold, pattern_empty, comb){
 # function: search for significant peaks (in pairwise comparisons)
 ##################################################################
 
-get_peakPattern <- function(p, threshold, IDs, cores){
+get_peakPattern <- function(p, threshold, IDs, cores, n.flank){
   
   # specifiy all possible pairwise combinations:
   comb <- combn(seq(1:length(IDs)),2)
@@ -621,7 +621,8 @@ get_peakPattern <- function(p, threshold, IDs, cores){
 							i,
 							threshold,
 							pattern_empty,
-							comb)
+							comb,
+							n.flank)
 			)
   
   # remove zeros:
@@ -676,14 +677,13 @@ combine_peaks <- function(x, flank){
 # function: combine peaks by significance pattern
 ##################################################################
 
-get_combinedDiffPeaks <- function(probs, p, pattern, IDs, len){
+get_combinedDiffPeaks <- function(probs, p, pattern, IDs, len, n.flank){
  
   # reduce GRanges()
   idx <- as.numeric(rownames(pattern))
   gr <- probs[idx,]
 
   # extend by flanking positions (because flanking positions are also significant):
-  n.flank <- 2	
   w <- width(gr[1])
   start(gr) <- start(gr) - ( n.flank*w )
   end(gr) <- end(gr) + ( n.flank*w )
@@ -699,36 +699,10 @@ get_combinedDiffPeaks <- function(probs, p, pattern, IDs, len){
   # remove gr:
   rm(gr)
 
-  # combine regions (with a flexible flanking area of length 'len')
-  #for(i in 1:length(peaks.split)){
-  #	if(!exists('peaks')){
-  #		peaks <- combine_peaks(peaks.split[[i]], flank = len)
-  #	}else{
-  #		peaks <- c(peaks, combine_peaks(peaks.split[[i]], flank = len))
-  #	}
-  # }
-
   peaks <- mclapply(	peaks.split, 
 			function(x) combine_peaks(x, flank = len), 
 			mc.cores = cores
   			)
-
-  #peaks <- c()
-  #for(s in seq(1, length(peaks.split), by=5)){
-#	if((s+5) > length(peaks.split)){
-#		this.peaks <- mclapply(  peaks.split[s:length(peaks.split)], 
- #       	            	function(x) combine_peaks(x, flank = len), 
-  #      	            	mc.cores = cores
-  #			)
-#		peaks=c(peaks,this.peaks)
-#	}else{
-#		this.peaks <- mclapply(  peaks.split[s:(s+5-1)], 
- #       	            	function(x) combine_peaks(x, flank = len), 
-  #      	            	mc.cores = cores
-  #			)
-#		peaks=c(peaks,this.peaks)
-#	}
- # }
   
   rm(peaks.split)
 
