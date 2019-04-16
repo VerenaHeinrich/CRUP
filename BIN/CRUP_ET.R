@@ -210,6 +210,7 @@ startPart("Correlate condition specific enhancers and genes")
 
 # dynamic enhancer regions:
 regions.gr <- makeGRangesFromDataFrame(read.table(regions, header = TRUE), keep.extra.columns = T)
+seqlevels(regions.gr) = paste0("chr", gsub("chr|Chr","",seqlevels(regions.gr)))
 cluster.U <- which(mcols(regions.gr)$cluster == 'U')
 if(length(cluster.U) > 0) {regions.gr <- regions.gr[-cluster.U]}
 

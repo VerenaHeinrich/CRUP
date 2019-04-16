@@ -912,6 +912,45 @@ plot_heatmap <- function(mat, IDs, color_low, color_mid, color_high, x_axis_labe
 # function: get summarized counts in defined bins
 ##################################################################
 
+get_bamOverlaps_alt <- function(files, IDs, txdb, singleEnd){
+  
+  # gives information about path of bam and bai file (Object)
+  bf = BamFileList(unlist(files))
+  
+  # gives length of different chromosomes (SeqInfo class)
+  si = seqinfo(bf)
+
+  # get exons and genes
+  expr.gr <- promoters(genes(txdb), upstream=2500, downstream=500)
+  seqlevels(expr.gr) = paste0("chr", gsub("chr","",seqlevels(expr.gr)))
+  
+  se <- summarizeOverlaps(expr.gr,
+                          bf,
+			  mode="Union",
+                          singleEnd = singleEnd,
+                          fragments = setdiff(c(FALSE,TRUE), singleEnd))
+
+  # at least 5 counts as maximum count:
+  se_high <- se[which(rowMax(assay(se))>5)]
+  expr.gr.high <- expr.gr[which(rowMax(assay(se))>5)]
+
+  # stabilize the variance across the mean:
+  # (The transformed data should be approximated variance stabilized
+  # and also includes correction for size factors or normalization factors)
+
+  dds <- suppressMessages(DESeqDataSet(se_high, ~ 1))
+  vsd <- varianceStabilizingTransformation(dds)
+  counts <- assay(vsd)
+
+  for (i in 1:dim(counts)[2]) {
+        mcols(expr.gr.high)[,unlist(IDs)[i]] <- counts[,i]
+  }
+  
+  return(expr.gr.high)
+}
+
+
+
 get_bamOverlaps <- function(files, IDs, txdb, singleEnd){
   
   # gives information about path of bam and bai file (Object)
@@ -935,6 +974,7 @@ get_bamOverlaps <- function(files, IDs, txdb, singleEnd){
   
   se <- summarizeOverlaps(exons,
                           bf,
+			  mode="Union",
                           singleEnd = singleEnd,
                           fragments = setdiff(c(FALSE,TRUE), singleEnd))
   
@@ -953,7 +993,10 @@ get_bamOverlaps <- function(files, IDs, txdb, singleEnd){
   # stabilize the variance across the mean:
   # (The transformed data should be approximated variance stabilized
   # and also includes correction for size factors or normalization factors)
-  vsd <- varianceStabilizingTransformation(suppressMessages(DESeqDataSet(se0, ~ 1)), blind = FALSE)
+
+  dds <- suppressMessages(DESeqDataSet(se0, ~ 1))
+  vsd <- varianceStabilizingTransformation(	dds,
+						blind = TRUE)
   counts <- assay(vsd)
 
   for (i in 1:dim(counts)[2]) {
