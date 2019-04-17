@@ -1002,10 +1002,10 @@ check_TAD <- function(t, TAD, this.region, regions){
     }
 
     if(length(which(!is.na(followT))) == 0 ){
-	end <- max(end(region[which(seqnames(regions) == seqnames(this.region))]))
+	end <- max(end(regions[which(seqnames(regions) == seqnames(this.region))]))
     }else{
     	end <- start(TAD[(which(!is.na(followT)))[1]])
-    	if (length(end) == 0) end <- max(end(region[which(seqnames(regions) == seqnames(this.region))]))
+    	if (length(end) == 0) end <- max(end(regions[which(seqnames(regions) == seqnames(this.region))]))
     }
 
     t <- GRanges(seqnames(this.region), IRanges(start, width = (end - start + 1)))

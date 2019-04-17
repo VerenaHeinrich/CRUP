@@ -233,7 +233,7 @@ done()
 out.txt <- paste0(outdir, paste0("RegulatoryUnits.txt"))
 cat(paste0(skip(), "save dynamic enhancer gene interactions in txt:  ", out.txt, "\n"))
 write.table(units, file = out.txt, quote = F, row.names = F, sep = "\t")
-done
+done()
 
 out.interaction <- paste0(outdir, paste0("RegulatoryUnits.interaction"))
 cat(paste0(skip(), "save dynamic enhancer gene interactions in UCSC interaction format:  ", out.interaction, "\n"))
@@ -260,7 +260,7 @@ interaction <- cbind( as.character(seqnames(units)),
                       rep(".", length(units)) )
 write.table(header, file = out.interaction, quote = F, col.names = F, row.names = F, sep = "\t")
 write.table(interaction, file = out.interaction, quote = F, row.names = F, col.names = F, sep = "\t", append = T)
-done
+done()
 
 endPart()
 
