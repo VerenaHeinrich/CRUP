@@ -26,8 +26,8 @@ spectrum <- matrix(c( 'norm',           'N', 0, "logical",       "computes norma
                       'dynamics',       'D', 0, "logical",       "runs CRUP - ED: assigns (E)nhancer to (D)ynamic conditions",
                       'targets',        'T', 0, "logical",       "runs CRUP - ET: correlates (E)nhancer to (T)arget genes",
                       'cores',          'x', 1, "integer",       "number of cores to use (DEFAULT:1)",
-                      'file',           'f', 1, "character",     "summary text file for ChIP-seq experiments",
-                      'matrix',         'm', 1, "character",     "normalized data matrix (rds file format)",
+                      'input',          'i', 1, "character",     "summary input for ChIP-seq experiments (in .txt format)",
+                      'matrix',         'm', 1, "character",     "normalized data matrix (.rds file format)",
                       'classifier',     'c', 1, "character",     "directory of enhancer classifier (DEFAULT: DATA/CLASSIFIER/)",
                       'cutoff',         'u', 1, "double",        "cutoff for probabilities [0,1] (DEFAULT: 0.5)",
                       'distance',       'd', 1, "integer",       "maximum distance (bp) for peak clustering (DEFAULT: 12500)",
@@ -35,17 +35,18 @@ spectrum <- matrix(c( 'norm',           'N', 0, "logical",       "computes norma
                       'sequencing',     's', 1, "character",     "type of sequencing ('paired' or 'single')",
                       'outdir',         'o', 1, "character",     "output directory (DEFAULT: same as 'file' directory)",
                       'probabilities',  'p', 1, "character",     "probabilities in rds format. list: delimiter samples: ':', delimiter conditions: ','",
-                      'names',          'n', 1, "character",     "aternative labels for conditions (DEFAULT: cond1,cond2, ..)",
+                      'label',          'l', 1, "character",     "aternative labels for conditions (DEFAULT: cond1,cond2, ..)",
                       'w_0',            'w', 1, "double",        "minimum difference between group means [0,1]. (DEFAULT: 0.5)",
                       'threshold',      't', 1, "double",        "threshold for p-values in [0,1]. (DEFAULT: 0.05)",
                       'threshold_c',    'C', 1, "double",        "threshold for correlation in [0.5,1]. (DEFAULT: 0.9)",
-                      'len',            'l', 1, "integer",       "length of flanking region for summarizing. (DEFAULT: 1000)",
+                      'flank',          'f', 1, "integer",       "length of flanking region for summarizing differential regions. (DEFAULT: 1000)",
                       'n.flank',        'F', 1, "integer",       "number of (+/-) flanking region for summarizing differential peaks. (DEFAULT: 2)",
                       'regions',        'r', 1, "character",     "text file with condition-specific regions in txt format",
                       'RNA',            'E', 1, "character",     "RNA-seq experiments in bam format. list: delimiter samples: ':', delimiter conditions: ','",
                       'expression',     'e', 1, "character",     "gene expression counts for all samples and conditions",
                       'TAD',            'b', 1, "character",     ".bed file with TADs (DEFAULT: DATA/mESC_mapq30_KR_all_TADs.bed)",
                       'mapq',           'q', 1, "integer",       "minimum mapping quality (DEFAULT:10)",
+		      'nearest',	'n', 0, "logical",	 "logical: if set, takes the nearest gene to build regulatory regions",
                       'help',           'h', 0, "logical",       "this help message"
 ),ncol = 5,byrow = T)
 
@@ -855,7 +856,7 @@ plot_heatmap <- function(mat, IDs, color_low, color_mid, color_high, x_axis_labe
 			 legend.title=element_text(size=15),
                          panel.grid.major = element_blank(), 
                          panel.grid.minor = element_blank(),
-                         panel.background = element_blank(), 
+                         panel.background = element_blank(),
                          legend.position = "bottom",
 			 panel.spacing = unit(0, "lines"),
 			 strip.background = element_rect(color="white", fill="white", size=0.5, linetype="solid"
@@ -885,44 +886,6 @@ plot_heatmap <- function(mat, IDs, color_low, color_mid, color_high, x_axis_labe
 ##################################################################
 # function: get summarized counts in defined bins
 ##################################################################
-
-get_bamOverlaps_alt <- function(files, IDs, txdb, singleEnd){
-  
-  # gives information about path of bam and bai file (Object)
-  bf = BamFileList(unlist(files))
-  
-  # gives length of different chromosomes (SeqInfo class)
-  si = seqinfo(bf)
-
-  # get exons and genes
-  expr.gr <- promoters(genes(txdb), upstream=2500, downstream=500)
-  seqlevels(expr.gr) = paste0("chr", gsub("chr","",seqlevels(expr.gr)))
-  
-  se <- summarizeOverlaps(expr.gr,
-                          bf,
-			  mode="Union",
-                          singleEnd = singleEnd,
-                          fragments = setdiff(c(FALSE,TRUE), singleEnd))
-
-  # at least 5 counts as maximum count:
-  se_high <- se[which(rowMax(assay(se))>5)]
-  expr.gr.high <- expr.gr[which(rowMax(assay(se))>5)]
-
-  # stabilize the variance across the mean:
-  # (The transformed data should be approximated variance stabilized
-  # and also includes correction for size factors or normalization factors)
-
-  dds <- suppressMessages(DESeqDataSet(se_high, ~ 1))
-  vsd <- varianceStabilizingTransformation(dds)
-  counts <- assay(vsd)
-
-  for (i in 1:dim(counts)[2]) {
-        mcols(expr.gr.high)[,unlist(IDs)[i]] <- counts[,i]
-  }
-  
-  return(expr.gr.high)
-}
-
 
 
 get_bamOverlaps <- function(files, IDs, txdb, singleEnd){
@@ -971,15 +934,20 @@ get_bamOverlaps <- function(files, IDs, txdb, singleEnd){
   dds <- suppressMessages(DESeqDataSet(se0, ~ 1))
   vsd <- varianceStabilizingTransformation(	dds,
 						blind = TRUE)
-  counts <- assay(vsd)
 
-  for (i in 1:dim(counts)[2]) {
-        mcols(expr.gr)[,unlist(IDs)[i]] <- counts[,i]
+  counts_vst <- assay(vsd)
+  counts_raw <- assay(dds)
+  expr_raw.gr <- expr.gr
+
+  for (i in 1:dim(counts_vst)[2]) {
+        mcols(expr.gr)[,unlist(IDs)[i]] <- counts_vst[,i]
+        mcols(expr_raw.gr)[,unlist(IDs)[i]] <- counts_raw[,i]
   }
   
-  expr.gr <- expr.gr[which(rowVars(counts) > 0)]
+  expr.gr <- expr.gr[which(rowVars(counts_vst) > 0)]
+  expr_raw.gr <- expr_raw.gr[which(rowVars(counts_vst) > 0)]
   
-  return(expr.gr)
+  return(list(raw = expr_raw.gr, vst = expr.gr))
 }
 
 
@@ -1035,10 +1003,22 @@ get_correlation <- function(i, threshold, regions.gr, expr.gr, TAD.gr, IDs){
     
     for (c in 1:length(cor)) {
       if (!is.na(cor[c]) && cor[c] >= threshold) {
-        interactions <- rbind(	interactions, 
+
+      promoter_start <- start(promoters(this.genes[c]))
+      promoter_end <- end(promoters(this.genes[c]))
+
+      if(as.character(strand(this.genes[c]))=="-"){
+      	promoter_start <- end(promoters(this.genes[c]))
+      	promoter_end <- start(promoters(this.genes[c]))
+      }
+
+      interactions <- rbind(	interactions, 
                                data.frame(	data.frame(this.region)[,c(GR_header_short, "cluster", IDs)],
                                            	TAD_COORDINATES = paste0(this.TAD),
                                            	CORRELATED_GENE = paste(mcols(this.genes)[c,"gene_id"]),
+						CORRELATED_GENE_CHR = seqnames(this.genes[c]),
+						CORRELATED_GENE_PROMOTER_START = promoter_start,
+						CORRELATED_GENE_PROMOTER_END = promoter_end,
                                            	CORRELATION = cor[c] ))
       }
     }
@@ -1046,20 +1026,62 @@ get_correlation <- function(i, threshold, regions.gr, expr.gr, TAD.gr, IDs){
   }
 }
 
+
+##################################################################
+# function: get nearest gene for a region
+##################################################################
+
+get_nearest_gene <- function(i, regions.gr, genes, IDs){
+
+  this.region <- regions.gr[i]
+
+  nearest <- genes[nearest(this.region, genes)]
+  distance.to.nearest <- distance(this.region, nearest)
+
+  promoter_start <- start(promoters(nearest))
+  promoter_end <- end(promoters(nearest))
+
+  if(as.character(strand(nearest))=="-"){
+      promoter_start <- end(promoters(nearest))
+      promoter_end <- start(promoters(nearest))
+  }
+
+  interactions <-	data.frame(	data.frame(this.region)[,c(GR_header_short, "cluster", IDs)],
+                                       	NEAREST_GENE = mcols(nearest)[,"gene_id"],
+					NEAREST_GENE_CHR = seqnames(nearest),
+					NEAREST_GENE_PROMOTER_START = promoter_start,
+					NEAREST_GENE_PROMOTER_END = promoter_end,
+                                       	DISTANCE_TO_NEAREST = distance.to.nearest
+			)
+
+  return(makeGRangesFromDataFrame(interactions, keep.extra.columns = T))
+}
+
+
 ##################################################################
 # function: correlate probabilities with gene expression values
 #(in same TAD; per cluster)
 ##################################################################
 
-get_units <- function(regions.gr, expr.gr, TAD.gr, IDs, cores, threshold){
+get_units <- function(regions.gr, expr.gr, TAD.gr, IDs, cores, threshold, txdb){
   
-  # get correlation for each differential region:
-  list <- mclapply( seq(length(regions.gr)), 
-                    function(x) get_correlation(x, threshold, regions.gr, expr.gr, TAD.gr, IDs), 
-                    mc.cores = cores
-  )
-  units <-  do.call("c", unname(unlist(list)))
-  
+  if(!isEmpty(TAD.gr)){
+  	# get correlation for each differential region:
+ 	 list <- mclapply( seq(length(regions.gr)), 
+ 	                   function(x) get_correlation(x, threshold, regions.gr, expr.gr, TAD.gr, IDs), 
+  	                   mc.cores = cores
+ 	 )
+  }else{
+
+	# get nearest gene:
+	genes <- genes(txdb)
+	seqlevels(genes) = paste0("chr", gsub("chr|Chr","",seqlevels(genes)))
+	list <- mclapply(  seq(length(regions.gr)), 
+ 	                   function(x) get_nearest_gene(x, regions.gr, genes, IDs), 
+  	                   mc.cores = cores
+ 	 )
+  }
+  units <-  do.call("c", unname(unlist(list)))  
   return(units)
 }
 

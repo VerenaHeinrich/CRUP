@@ -34,7 +34,7 @@ ID_prefix         <- "cond"
 
 parameter <- c("regions", "RNA", "expression", "genome", "sequencing")
 parameter.bool <- sapply(parameter, function(x) !is.null(opt[[x]]))
-parameter.extra <- c("outdir", "cores", "TAD", "names", "threshold_c")
+parameter.extra <- c("outdir", "cores", "TAD", "label", "threshold_c", "nearest")
 
 if (!is.null(opt$help)) stop_script(c("targets", parameter, parameter.extra))
 if (is.null(opt$regions)) stop_script(c("targets", parameter, parameter.extra))
@@ -67,13 +67,13 @@ if (!is.null(opt$expression)) {
   for (f in unlist(rna)) check_file(f)
   
   # assign IDs: 
-  if (is.null(opt$names)) {
+  if (is.null(opt$label)) {
     IDs <- lapply(1:length(rna), function(x) paste0(ID_prefix, x, "_",seq(1:length(rna[[x]]))))
   }else{
-    labels <- unlist(strsplit(opt$names,','))
+    labels <- unlist(strsplit(opt$label,','))
     
     if (length(labels) != length(rna)) {
-      cat("\n\tWARNING: Number of alternative condition names ('n') is not valid.
+      cat("\n\tWARNING: Number of alternative condition labels ('l') is not valid.
         Names are set to default labels.\n");
         IDs <- lapply(1:length(rna), function(x) paste0(ID_prefix, x, "_", seq(1:length(rna[[x]]))))
     } else{
@@ -98,12 +98,15 @@ if (is.null(opt$threshold_c)) {
   q();
 }
 if (is.null(opt$cores)) opt$cores <- 1
-if (is.null(opt$TAD) & opt$genome == "mm10") {
-  opt$TAD   <- normalizePath(paste0(path,"/DATA/mESC_mapq30_KR_all_TADs.bed"))
-}
-if (is.null(opt$TAD))  {
-  cat(paste0("You have to provide your own file with TAD domains (fitting to the genome choice).\n"))
-  q();
+
+if (is.null(opt$nearest)){
+	if (is.null(opt$TAD) & is.null(opt$nearest) & opt$genome == "mm10") {
+	  opt$TAD   <- normalizePath(paste0(path,"/DATA/mESC_mapq30_KR_all_TADs.bed"))
+	}
+	if (is.null(opt$TAD) & is.null(opt$nearest))  {
+	  cat(paste0("You have to provide your own file with TAD domains (fitting to the genome choice).\n"))
+	  q();
+	}
 }
 
 ##################################################################
@@ -115,7 +118,7 @@ startPart("List input parameter")
 outdir      <- paste0(normalizePath(opt$outdir),"/")
 cores       <- opt$cores
 regions     <- paste0(normalizePath(opt$regions))
-TAD         <- opt$TAD
+if (is.null(opt$nearest)) TAD <- opt$TAD
 threshold_c <- opt$threshold_c
 
 if (!is.null(opt$expression)) {
@@ -136,9 +139,16 @@ if (!is.null(opt$expression)) {
   cat(skip(), "genome: ",genome, "\n")
 }
 
-cat(skip(), "threshold_c: ",threshold_c, "\n")
 cat(skip(), "regions: ",regions, "\n")
-cat(skip(), "TAD: ",TAD, "\n")
+if (is.null(opt$nearest)){
+	cat(skip(), "threshold_c: ",threshold_c, "\n")
+	cat(skip(), "TAD: ",TAD, "\n")
+}
+if (!is.null(opt$nearest)){
+	genome      <- opt$genome
+	cat(paste0("Will choose the nearest gene to a each differential region to build a regulatory unit.\n"))
+}
+
 cat(skip(), "cores: ",cores, "\n")
 cat(skip(), "outdir: ",outdir, "\n")
 
@@ -153,7 +163,8 @@ startPart("Load packages")
 pkgLoad("ggplot2")        # for ggplot()
 pkgLoad("GenomicRanges")  # for GRanges()
 
-if (is.null(opt$expression)) {
+txdb <- ""
+if (is.null(opt$expression) | !is.null(opt$nearest)) {
   
   if (genome == "mm9") pkg <- "TxDb.Mmusculus.UCSC.mm9.knownGene"
   if (genome == "mm10") pkg <- "TxDb.Mmusculus.UCSC.mm10.knownGene"
@@ -164,9 +175,12 @@ if (is.null(opt$expression)) {
   assign("txdb", eval(parse(text = pkg)))
   
   pkgLoad("GenomicFeatures")    # for exonsBy()
-  pkgLoad("GenomicAlignments")  # for summarizeOverlaps()
-  pkgLoad("Rsamtools")          # for seqinfo()
-  pkgLoad("DESeq2")             # for varianceStabilizingTransformation()
+
+  if (is.null(opt$expression))  {
+  	pkgLoad("GenomicAlignments")  # for summarizeOverlaps()
+  	pkgLoad("Rsamtools")          # for seqinfo()
+  	pkgLoad("DESeq2")             # for varianceStabilizingTransformation()
+  }
 }
 
 endPart()
@@ -180,15 +194,22 @@ if (is.null(opt$expression)) {
 
   # get summarized and normalized counts
   cat(paste0(skip(), "get normalized gene expression counts"))
-  expr.gr <- get_bamOverlaps( unlist(rna),
+  list <- get_bamOverlaps( unlist(rna),
                               IDs,
                               txdb,
                               singleEnd = (sequencing == "single"))
+  expr.gr <- list[['vst']]
+  expr_raw.gr <- list[['raw']]
+  done()
+
+  out_raw.rds <- paste0(outdir, paste0("gene_expression_raw.rds"))
+  cat(paste0(skip(), "save raw gene expression counts to:  ", out_raw.rds))
+  saveRDS(expr_raw.gr, out_raw.rds)
   done()
   
-  out.rds <- paste0(outdir, paste0("gene_expression.rds"))
-  cat(paste0(skip(), "save normalized gene expression counts to:  ", out.rds))
-  saveRDS(expr.gr, out.rds)
+  out_vst.rds <- paste0(outdir, paste0("gene_expression_vst.rds"))
+  cat(paste0(skip(), "save normalized gene expression counts to:  ", out_vst.rds))
+  saveRDS(expr.gr, out_vst.rds)
   done()
   
   # get IDs:
@@ -206,7 +227,7 @@ if (is.null(opt$expression)) {
 # get correlation:
 ##################################################################
 
-startPart("Correlate condition specific enhancers and genes")
+startPart("Build Regulatory Units")
 
 # dynamic enhancer regions:
 regions.gr <- makeGRangesFromDataFrame(read.table(regions, header = TRUE), keep.extra.columns = T)
@@ -215,39 +236,60 @@ cluster.U <- which(mcols(regions.gr)$cluster == 'U')
 if(length(cluster.U) > 0) {regions.gr <- regions.gr[-cluster.U]}
 
 # TAD/domain regions:
-TAD.df <- read.table(TAD, col.names = GR_header_short)
-TAD.df <- TAD.df[which((TAD.df$end-TAD.df$start) > 0),]
-TAD.gr <- makeGRangesFromDataFrame(TAD.df)
-seqlevels(TAD.gr) = paste0("chr", gsub("chr|Chr","",seqlevels(TAD.gr)))
+TAD.gr <- GRanges()
+if (is.null(opt$nearest)){
+	TAD.df <- read.table(TAD, col.names = GR_header_short)
+	TAD.df <- TAD.df[which((TAD.df$end-TAD.df$start) > 0),]
+	TAD.gr <- makeGRangesFromDataFrame(TAD.df)
+	seqlevels(TAD.gr) = paste0("chr", gsub("chr|Chr","",seqlevels(TAD.gr)))
+}
 
-cat(paste0(skip(), "correlate enhancer probabilities and gene expression counts"))
 units <- get_units(	regions.gr,
 			expr.gr,
 			TAD.gr,
 			IDs,
 			cores,
-			threshold_c
+			threshold_c,
+			txdb
 			)
-done()
 
-out.txt <- paste0(outdir, paste0("RegulatoryUnits.txt"))
+out.txt <- ""
+if (is.null(opt$nearest)){
+	out.txt <- paste0(outdir, paste0("RegulatoryUnits_CorrTres_", threshold_c,".txt"))
+}else{
+	out.txt <- paste0(outdir, paste0("RegulatoryUnitsNearestGene.txt"))
+}
 cat(paste0(skip(), "save dynamic enhancer gene interactions in txt:  ", out.txt, "\n"))
 write.table(units, file = out.txt, quote = F, row.names = F, sep = "\t")
 done()
 
-out.interaction <- paste0(outdir, paste0("RegulatoryUnits.interaction"))
+out.interaction <- ""
+if (is.null(opt$nearest)){
+	out.interaction <- paste0(outdir, paste0("RegulatoryUnits_CorrTres_", threshold_c,".interaction"))
+}else{
+	out.interaction <- paste0(outdir, paste0("RegulatoryUnitsNearestGene.interaction"))
+}
 cat(paste0(skip(), "save dynamic enhancer gene interactions in UCSC interaction format:  ", out.interaction, "\n"))
 
 header <- "track type=interact name=\"Dynamic Promoter-Enhancer Pairs\" description=\"Dynamic Promoter-Enhancer Pairs\" interactDirectional=true visibility=full"
 enhancer <- as.matrix(data.frame(units)[,c("start","end")])
-promoter <- as.matrix(data.frame(promoters(expr.gr[mcols(units)$CORRELATED_GENE]))[,c("start","end")])
+
+promoter <-c()
+score <- 0
+if (is.null(opt$nearest)){
+	promoter <- as.matrix(data.frame(mcols(units)$CORRELATED_GENE_PROMOTER_START, mcols(units)$CORRELATED_GENE_PROMOTER_END))
+	score <- mcols(units)$CORRELATION
+}else{
+	promoter <- as.matrix(data.frame(mcols(units)$NEAREST_GENE_PROMOTER_START, mcols(units)$NEAREST_GENE_PROMOTER_END))
+	score <- mcols(units)$DISTANCE_TO_NEAREST
+}
 
 interaction <- cbind( as.character(seqnames(units)),
                       apply(cbind(enhancer,promoter),1,min),
                       apply(cbind(enhancer,promoter),1,max),
                       rep(".", length(units)),
                       rep(0, length(units)),
-                      mcols(units)$CORRELATION,
+                      score,
                       rep(".", length(units)),
                       rep("#7A67EE", length(units)),
                       as.character(seqnames(units)),

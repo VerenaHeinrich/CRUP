@@ -26,7 +26,7 @@ if (!exists('opt')) {
 # check input parameter
 ##################################################################
 
-parameter <- c("file", "sequencing", "genome")
+parameter <- c("input", "sequencing", "genome")
 parameter.bool <- sapply(parameter, function(x) !is.null(opt[[x]]))
 parameter.extra <- c("outdir", "cores", "mapq")
 
@@ -41,7 +41,7 @@ if (!(opt$sequencing %in% sequencing_values)) {
 }
 
 # check summary file
-check_file(opt$file)
+check_file(opt$input)
 
 # check genome
 if (!is.null(opt$genome)) { 
@@ -50,7 +50,7 @@ if (!is.null(opt$genome)) {
     q();}}
 
 # check output directory
-opt$outdir <- check_outdir(opt$outdir, opt$file)
+opt$outdir <- check_outdir(opt$outdir, opt$input)
 
 # set default values
 if (is.null(opt$mapq))   opt$mapq <- 10
@@ -62,7 +62,7 @@ if (is.null(opt$cores))  opt$cores <- 1
 
 startPart("List input parameter")
 
-file        <- normalizePath(opt$file)
+file        <- normalizePath(opt$input)
 genome      <- opt$genome
 mapq        <- opt$mapq
 sequencing  <- opt$sequencing

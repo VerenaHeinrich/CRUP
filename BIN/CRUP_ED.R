@@ -47,7 +47,7 @@ sample_prefix     <- "Rep"
 
 parameter <- c("probabilities")
 parameter.bool <- sapply(parameter, function(x) !is.null(opt[[x]]))
-parameter.extra <- c("outdir", "cores", "w_0", "len", "n.flank", "threshold", "names")
+parameter.extra <- c("outdir", "cores", "w_0", "flank", "n.flank", "threshold", "label")
 
 if (!is.null(opt$help)) stop_script(c("dynamics", parameter, parameter.extra))
 if (sum(parameter.bool) == 0) stop_script(c("dynamics", parameter, parameter.extra))
@@ -58,15 +58,15 @@ files <- lapply(files, function(x) unlist(strsplit(x,':')))
 for (f in unlist(files)) check_file(f)
 
 # assign IDs: 
-if (is.null(opt$names)) {
+if (is.null(opt$label)) {
   IDs <- lapply(1:length(files), function(x) paste0(ID_prefix, x, "_",seq(1:length(files[[x]]))))
 }else{
-  labels <- unlist(strsplit(opt$names,','))
+  labels <- unlist(strsplit(opt$label,','))
 
   if (length(labels) != length(files)) {
-    cat("\n\tWARNING: Number of alternative condition names ('n') is not valid.
+      cat("\n\tWARNING: Number of alternative condition labels ('l') is not valid.
         Names are set to default labels.\n");
-    IDs <- lapply(1:length(files), function(x) paste0(ID_prefix, x, "_", seq(1:length(files[[x]]))))
+    	IDs <- lapply(1:length(files), function(x) paste0(ID_prefix, x, "_", seq(1:length(files[[x]]))))
   } else{
     IDs <- files
     for (i in 1:length(IDs)) {
@@ -82,7 +82,7 @@ opt$outdir <- check_outdir(opt$outdir, unlist(files)[1])
 
 # set default values
 if (is.null(opt$cores))       opt$cores <- 1
-if (is.null(opt$len))         opt$len <- 1000
+if (is.null(opt$flank))       opt$flank <- 1000
 if (is.null(opt$n.flank))     opt$n.flank <- 2
 if (is.null(opt$threshold)) {
   opt$threshold <- 0.05 
