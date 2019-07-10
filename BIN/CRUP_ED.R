@@ -107,7 +107,7 @@ files     <- lapply(files, function(x) normalizePath(x))
 outdir    <- paste0(normalizePath(opt$outdir),"/")
 cores     <- opt$cores
 w_0       <- opt$w_0
-len       <- opt$len
+len       <- opt$flank
 threshold <- opt$threshold
 n.flank	  <- opt$n.flank
 
