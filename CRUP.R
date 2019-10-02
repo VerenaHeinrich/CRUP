@@ -23,7 +23,7 @@ source(paste0(path,'/BIN/functions.R'))
 # libraries
 ##################################################################
 
-pkgTest("getopt")
+pkgLoad("getopt")
 suppressMessages(library(getopt))
 opt <- getopt(spectrum)
 

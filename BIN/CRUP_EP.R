@@ -113,7 +113,7 @@ features2 <- unique(gsub('_.*','',names(classifier2$forest$xlevels)))
 features_all <- unique(c(features1, features2)) 
 
 # ecdf: will be used for quantile normalization
-ecdf_file <- paste0(path, "/DATA/ecdf.rds")
+ecdf_file <- paste0(path, "/DATA/CLASSIFIER/ecdf.rds")
 check_file(ecdf_file)
 ecdf <- readRDS(ecdf_file)
 

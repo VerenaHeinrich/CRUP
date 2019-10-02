@@ -15,7 +15,7 @@ if (!exists('opt')) {
   source(paste0(path,'/BIN/functions.R'))
   
   # library - getopt
-  pkgTest("getopt")
+  pkgLoad("getopt")
   suppressMessages(library(getopt))
 
   # get input parameter

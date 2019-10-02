@@ -132,8 +132,18 @@ pkgInstall <- function(pkg) {
     x <- tryCatch({eval(parse(text = sprintf("install.packages(\"%s\", dependencies = T)", pkg)))})
 
     if(is.null(x)) {
-	x <- tryCatch({source("http://bioconductor.org/biocLite.R")
-    	eval(parse(text = sprintf("biocLite(\"%s\")", pkg)))})
+
+	
+  	if (!'BiocManager' %in% installed.packages()){
+		if (!requireNamespace("BiocManager", quietly = TRUE))
+    		install.packages("BiocManager")
+		BiocManager::install()
+	}
+	x <- tryCatch({eval(parse(text = sprintf("BiocManager::install(\"%s\")", pkg)))})
+
+	# old: 
+	# x <- tryCatch({source("http://bioconductor.org/biocLite.R")
+    	# eval(parse(text = sprintf("biocLite(\"%s\")", pkg)))})
     }
 
     if(is.null(x)) {
