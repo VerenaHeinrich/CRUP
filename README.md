@@ -14,7 +14,7 @@ heinrich@molgen.mpg.de
 
 #### *Citation*
 
-I you are using CRUP, please cite the following publication:\
+I you are using CRUP, please cite the following publication:
 
 https://genomebiology.biomedcentral.com/articles/10.1186/s13059-019-1860-7
 
