@@ -15,10 +15,8 @@ heinrich@molgen.mpg.de
 #### *Citation*
 
 I you are using CRUP, please cite the following publication:\
-This is still unpublished work.
 
-#### *Preprint*
-https://www.biorxiv.org/content/biorxiv/early/2018/12/19/501601.full.pdf
+https://genomebiology.biomedcentral.com/articles/10.1186/s13059-019-1860-7
 
 
 ## **Run CRUP** 
