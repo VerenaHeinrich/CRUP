@@ -28,7 +28,7 @@ if (!exists('opt')) {
 
 parameter <- c("input", "sequencing", "genome")
 parameter.bool <- sapply(parameter, function(x) !is.null(opt[[x]]))
-parameter.extra <- c("outdir", "cores", "mapq", "Inputfree")
+parameter.extra <- c("outdir", "cores", "mapq")
 
 if (!is.null(opt$help)) stop_script(c("norm", parameter, parameter.extra))
 if (sum(parameter.bool) == 0) stop_script(c("norm", parameter, parameter.extra))
@@ -53,9 +53,8 @@ if (!is.null(opt$genome)) {
 opt$outdir <- check_outdir(opt$outdir, opt$input)
 
 # set default values
-if (is.null(opt$mapq))       opt$mapq <- 10
-if (is.null(opt$cores))      opt$cores <- 1
-if (is.null(opt$Inputfree)){  opt$Inputfree <- "no" } else{opt$Inputfree <- "yes"}
+if (is.null(opt$mapq))   opt$mapq <- 10
+if (is.null(opt$cores))  opt$cores <- 1
 
 ##################################################################
 # define input parameter
@@ -64,7 +63,6 @@ if (is.null(opt$Inputfree)){  opt$Inputfree <- "no" } else{opt$Inputfree <- "yes
 startPart("List input parameter")
 
 file        <- normalizePath(opt$input)
-Inputfree   <- opt$Inputfree
 genome      <- opt$genome
 mapq        <- opt$mapq
 sequencing  <- opt$sequencing
@@ -72,7 +70,6 @@ cores       <- opt$cores
 outdir      <- paste0(normalizePath(opt$outdir),"/")
 
 cat(skip(), "file: ",file, "\n")
-cat(skip(), "Inputfree: ",Inputfree, "\n")
 cat(skip(), "mapq: ",mapq, "\n")
 cat(skip(), "genome: ",genome, "\n")
 cat(skip(), "sequencing: ",sequencing, "\n")
@@ -114,8 +111,6 @@ info <- read.csv(file	<- file,
 
 # check info file:
 header.valid <- c("feature", "bam_file", "bam_file_input")
-if(Inputfree == "yes") header.valid <- c("feature", "bam_file")
-
 if (!identical(colnames(info), header.valid)) {
   cat(paste0("Header in summary text file is not correct.\n
               Header must be tab separated and contain: ",header.valid,"\n")
@@ -140,7 +135,6 @@ if (! all(as.character(info$feature) %in% features.valid)) {
 # check if all paths in file exist
 bam_files_HM <- as.character(info$bam_file)
 bam_files_input <- as.character(info$bam_file_input)
-if(Inputfree == "yes") bam_files_input <- NULL
 
 for (this in unique(c(bam_files_HM, bam_files_input))) {
   check_file(this)
@@ -181,7 +175,6 @@ startPart("Get summarized counts from ChIP-seq experiments")
 
 # prepare feature names:
 names = c( features.valid, paste0("Input_",features.valid))
-if(Inputfree == "yes") names = features.valid
 
 if (length(unique(bam_files_input)) == 1) {
   bam_files_input <- bam_files_input[1]
@@ -204,18 +197,15 @@ endPart()
 # get counts from ChIP-seq experiments
 ##################################################################
 
-if(Inputfree == "no"){
-	startPart("Normalize histone modifications by Input")
+startPart("Normalize histone modifications by Input")
 
-	if ("Input_All" %in% names(counts)) {
-	  normalized_counts <- lapply( features.valid, function(x) log2((counts[[x]] + 1)/(counts[[paste0("Input_All")]] + 1)))
-	}else {
-	  normalized_counts <- lapply( features.valid, function(x) log2((counts[[x]] + 1)/(counts[[paste0("Input_",x)]] + 1)))
-	}
-endPart()
-}else{
-	  normalized_counts <- counts
+if ("Input_All" %in% names(counts)) {
+  normalized_counts <- lapply( features.valid, function(x) log2((counts[[x]] + 1)/(counts[[paste0("Input_All")]] + 1)))
+}else {
+  normalized_counts <- lapply( features.valid, function(x) log2((counts[[x]] + 1)/(counts[[paste0("Input_",x)]] + 1)))
 }
+
+endPart()
 
 ##################################################################
 # create data matrix for all normalized ChIP-seq experiments

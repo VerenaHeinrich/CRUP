@@ -25,6 +25,7 @@ spectrum <- matrix(c( 'norm',           'N', 0, "logical",       "computes norma
                       'prediction',     'P', 0, "logical",       "runs CRUP - EP: (E)nhancer (P)rediction from histone modification",
                       'dynamics',       'D', 0, "logical",       "runs CRUP - ED: assigns (E)nhancer to (D)ynamic conditions",
                       'targets',        'T', 0, "logical",       "runs CRUP - ET: correlates (E)nhancer to (T)arget genes",
+		      'Inputfree',	'I', 0, "logical",	 "runs CRUP - N without additional ChIP-seq Input normalization",
                       'cores',          'x', 1, "integer",       "number of cores to use (DEFAULT:1)",
                       'input',          'i', 1, "character",     "summary input for ChIP-seq experiments (in .txt format)",
                       'matrix',         'm', 1, "character",     "normalized data matrix (.rds file format)",
