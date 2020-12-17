@@ -47,7 +47,11 @@ if (!is.null(opt$RNA) & !is.null(opt$expression)) {
 
 # check genome
 if (!is.null(opt$genome)) { 
-  if (!(opt$genome %in% genome_values)) { 
+ if (grepl('.fai',opt$genome)) { 
+    cat(skip(),"Alternative genomes currently not provided for CRUP-ET. Choose one of: ",paste0(genome_values),"\n\n");
+    q();
+  } 
+ if (!(opt$genome %in% genome_values)) { 
     cat(skip(),"Genome" , opt$genome, " currently not provided. Choose one of: ",paste0(genome_values),"\n\n");
     q();
   }

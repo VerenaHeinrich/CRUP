@@ -10,10 +10,10 @@ headline <- "\n*****************************************************************
   *             (C)ondition-specific (R)egulatory (U)nits (P)rediction                *	
   R                                                                                   R	
   *                                                                                   *	
-  U                           (version 1.0 - 11/10/2018)                              U	
+  U                           (version 1.1 - 15/12/2020)                              U	
   *                                                                                   * 
   P                                     contact:                                      P 
-  *                 ramisch@molgen.mpg.de,heinrich@molgen.mpg.de                      * 
+  *                 		 heinrich@molgen.mpg.de          	              * 
 
 *****************************************************************************************\n\n"
 
@@ -32,7 +32,7 @@ spectrum <- matrix(c( 'norm',           'N', 0, "logical",       "computes norma
                       'classifier',     'c', 1, "character",     "directory of enhancer classifier (DEFAULT: DATA/CLASSIFIER/)",
                       'cutoff',         'u', 1, "double",        "cutoff for probabilities [0,1] (DEFAULT: 0.5)",
                       'distance',       'd', 1, "integer",       "maximum distance (bp) for peak clustering (DEFAULT: 12500)",
-                      'genome',         'g', 1, "character",     "genome used in the .bam files ('hg19', 'mm10', 'mm9' or 'hg38')",
+                      'genome',         'g', 1, "character",     "genome used in alignments ('hg19', 'mm10', 'mm9' or 'hg38'). Alternatively: location of a fasta index in .fai format with chromosome lengths.",
                       'sequencing',     's', 1, "character",     "type of sequencing ('paired' or 'single')",
                       'outdir',         'o', 1, "character",     "output directory (DEFAULT: same as 'file' directory)",
                       'probabilities',  'p', 1, "character",     "probabilities in rds format. list: delimiter samples: ':', delimiter conditions: ','",
@@ -177,9 +177,9 @@ pkgLoad <- function(pkg) {
   if(pkgTest(pkg) == F){
  	pkgInstall(pkg)
   }else{
-	cat(paste0(skip(), "load package ", pkg))
+	#cat(paste0(skip(), "load package ", pkg))
   	suppressMessages(library(pkg, character.only = TRUE))
-  	done()
+  	#done()
   }
 }
 
@@ -187,7 +187,7 @@ pkgLoad <- function(pkg) {
 # function: partition genome into bins
 ##################################################################
 
-get_binned_genome <- function(txdb, width){
+get_binned_genome_old_delete_me <- function(txdb, width){
   
   # get binned genome from txdb object
   binned <- tileGenome(seqinfo(txdb),
@@ -200,6 +200,22 @@ get_binned_genome <- function(txdb, width){
   # delete last region in each chromosome that is smaller than 100
   return(binned[-which(width(binned) != 100)])
 }
+
+
+get_binned_genome <- function(seqinfo, width){
+  
+  # get binned genome from txdb object
+  binned <- tileGenome(seqinfo,
+	                         tilewidth = width, 
+	                         cut.last.tile.in.chrom = TRUE)
+  
+  # only take autosomes and X chromosome
+  if(grepl('^chr',seqlevels(seqinfo)[1]) == T) seqlevels(binned, pruning.mode = "coarse") <- seqlevels(seqinfo)[grep("^chr[0-9]{,2}$|chrX$", seqlevels(seqinfo))]
+  
+  # delete last region in each chromosome that is smaller than 100
+  return(binned[-which(width(binned) != 100)])
+}
+
 
 
 ##################################################################

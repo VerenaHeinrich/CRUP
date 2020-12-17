@@ -80,6 +80,7 @@ Nothing needs to be installed manually.
 > BSgenome.Mmusculus.UCSC.mm10 # when using genome mm10\
 > BSgenome.Hsapiens.UCSC.hg19 # when using genome hg19\
 > BSgenome.Hsapiens.UCSC.hg38 # when using genome hg38\
+> GenomeInfoDb\ # when providing an alternative genome
 > preprocessCore\
 > randomForest\
 > GenomicRanges\

@@ -45,16 +45,17 @@ check_file(opt$input)
 
 # check genome
 if (!is.null(opt$genome)) { 
-  if (!(opt$genome %in% genome_values)) { 
-    cat("Genome" , opt$genome, " currently not provided. Choose one of: ",paste(genome_values,","),"\n\n");
-    q();}}
+  if (!(opt$genome %in% genome_values) & (grepl('.fai',opt$genome) == F)) { 
+    cat("Genome" , opt$genome, " currently not provided. Choose one of: ",paste(genome_values,","),"\nAlternatively: provide a fasta index in .fai format with chromsome lengths.\n\n");
+    q();}
+} 
 
 # check output directory
 opt$outdir <- check_outdir(opt$outdir, opt$input)
 
 # set default values
 if (is.null(opt$mapq))       opt$mapq <- 10
-if (is.null(opt$cores))      opt$cores <- 1
+if (is.null(opt$cores))       opt$cores <- 1
 if (is.null(opt$Inputfree)){  opt$Inputfree <- "no" } else{opt$Inputfree <- "yes"}
 
 ##################################################################
@@ -87,13 +88,22 @@ endPart()
 
 startPart("Load packages")
 
-if (genome == "mm10") pkg <- "BSgenome.Mmusculus.UCSC.mm10"
-if (genome == "mm9") pkg  <- "BSgenome.Mmusculus.UCSC.mm9"
-if (genome == "hg19") pkg <- "BSgenome.Hsapiens.UCSC.hg19"
-if (genome == "hg38") pkg <- "BSgenome.Hsapiens.UCSC.hg38"
+if(opt$genome %in% genome_values){
+	if (genome == "mm10") pkg <- "BSgenome.Mmusculus.UCSC.mm10"
+	if (genome == "mm9") pkg  <- "BSgenome.Mmusculus.UCSC.mm9"
+	if (genome == "hg19") pkg <- "BSgenome.Hsapiens.UCSC.hg19"
+	if (genome == "hg38") pkg <- "BSgenome.Hsapiens.UCSC.hg38"
 
-pkgLoad(pkg)                            # for genome object
-assign("txdb", eval(parse(text = pkg)))
+	pkgLoad(pkg)                        
+	assign("txdb", eval(parse(text = pkg)))
+	seqinfo <- seqinfo(txdb)
+}else if(grepl('.fai',opt$genome) == T){
+	 check_file(opt$genome)
+	 index <- read.table(opt$genome, col.names=c('seqnames', 'seqlengths', 'ByteIndex', 'BasesPerLine', 'BytePerLine'))
+
+	 pkgLoad("GenomeInfoDb") 
+	 seqinfo <- Seqinfo(as.character(index$seqnames), seqlengths=index$seqlengths, isCircular=NA, genome=NA)
+}
 
 pkgLoad("bamsignals")                   # for bamProfile()
 pkgLoad("Rsamtools")                    # for scanBamHeader()
@@ -157,18 +167,18 @@ startPart("Prepare the binned genome")
 
 # bin the genome
 cat(paste0(skip(), "get binned genome for ", genome))
-binned_genome <- get_binned_genome(txdb,tilewidth <- 100)
+binned_genome <- get_binned_genome(seqinfo, tilewidth <- 100)
 done()
 
 # get prefix of chromosome names
 cat(paste0(skip(), "get prefix of chromosomes from  file ", bam_files_HM[1]))
 bam_header <-  scanBamHeader(bam_files_HM[1])[[1]]$targets
-prefix <- gsub("chr", "",binned_genome@seqnames)
+prefix <- gsub("^chr", "",binned_genome@seqnames)
 done()
  
 # check if prefix of chromosome names ("chr1" or "1")
 cat(paste0(skip(), "adjust prefix of chromosome names in binned genome"))
-if (!("chr1" %in% names(bam_header)))  binned_genome@seqnames = prefix
+if (opt$genome %in% genome_values & !("chr1" %in% names(bam_header)))  binned_genome@seqnames = prefix
 done()
 
 endPart()
@@ -228,7 +238,7 @@ mcols(binned_genome) <-  matrix( unlist(normalized_counts),
                                  ncol = length(info$feature),
                                  byrow = FALSE,
                                  dimnames = list(NULL, features.valid))
-seqlevels(binned_genome) = paste0('chr', gsub('chr|Chr','',seqlevels(binned_genome)))
+if (opt$genome %in% genome_values) seqlevels(binned_genome) = paste0('chr', gsub('chr|Chr','',seqlevels(binned_genome)))
 done()
 
 # include log2 H3K4me1/H3K4me3 ratio
@@ -237,6 +247,10 @@ nominator   <- mcols(binned_genome)[,"H3K4me1"] + abs(min(mcols(binned_genome)[,
 denominator <- mcols(binned_genome)[,"H3K4me3"] + abs(min(mcols(binned_genome)[,"H3K4me3"])) + 1
 mcols(binned_genome)[,"ratio"] <- log2(nominator/denominator)
 done()
+
+# sort
+binned_genome <- sortSeqlevels(binned_genome)
+binned_genome<- sort(binned_genome)
 
 # save data matrix
 out <- paste0(outdir, paste0(gsub(".txt|.info","",basename(file)), ".data_matrix.rds"))
